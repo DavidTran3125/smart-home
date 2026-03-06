@@ -1,0 +1,893 @@
+\documentclass[a4paper,twoside]{article}
+\usepackage[utf8]{vntex}
+\usepackage{a4wide,amssymb,epsfig,latexsym,array,hhline,fancyhdr}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{cite}
+\usepackage{gensymb}
+\usepackage{amsmath}
+\usepackage{diagbox}
+\usepackage{makecell}
+\usepackage{multirow}
+\usepackage{amsmath}
+\usepackage{mathtools}
+\usepackage[vietnamese.licr]{babel}  % Chọn ngôn ngữ Việt Nam
+\usepackage{listings}         
+\usepackage{xcolor}
+\usepackage{xfrac}
+\usepackage{float}
+\usepackage[hidelinks]{hyperref}
+\usepackage[framed, numbered]{matlab-prettifier}
+\usepackage[left=2cm, right=1.5cm, top=2.5cm, bottom=2.5cm, bindingoffset=1cm]{geometry}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=same,
+    filecolor=magenta,      
+    urlcolor=blue
+}
+\urlstyle{same}
+
+
+\lstdefinestyle{vietnameseSQL}{
+    literate=%
+% Vần a
+	{á}{{\'a}}1
+	{à}{{\`a}}1
+	{ạ}{{\d a}}1
+	{ả}{{\h a}}1
+	{ã}{{\~ a}}1
+	%
+	{Á}{{\'A}}1
+	{À}{{\`A}}1
+	{Ạ}{{\d A}}1
+	{Ả}{{\h A}}1
+	{Ã}{{\~ A}}1
+%
+% Vần ă
+	{ă}{{\u a}}1
+	{ắ}{{\'\abreve }}1
+	{ằ}{{\`\abreve }}1
+	{ặ}{{\d \abreve }}1
+	{ẳ}{{\h \abreve }}1
+	{ẵ}{{\~\abreve }}1
+	%
+	{Ă}{{\u A}}1
+	{Ắ}{{\'\ABREVE }}1
+	{Ằ}{{\`\ABREVE }}1
+	{Ặ}{{\d \ABREVE }}1
+	{Ẳ}{{\h \ABREVE }}1
+	{Ẵ}{{\~\ABREVE }}1
+%
+% Vần â
+	{â}{{\^ a}}1
+	{ấ}{{\'\acircumflex }}1
+	{ầ}{{\`\acircumflex }}1
+	{ậ}{{\d \acircumflex }}1
+	{ẩ}{{\h \acircumflex }}1
+	{ẫ}{{\~\acircumflex }}1
+	 %
+	{Â}{{\^ A}}1
+	{Ấ}{{\'\ACIRCUMFLEX }}1
+	{Ầ}{{\`\ACIRCUMFLEX }}1
+	{Ậ}{{\d \ACIRCUMFLEX }}1
+	{Ẩ}{{\h \ACIRCUMFLEX }}1
+	{Ẫ}{{\~\ACIRCUMFLEX }}1
+%
+% Vần đ
+	{đ}{{\dj }}1
+	{Đ}{{\DJ }}1
+%
+% Vần e
+	{é}{{\'e}}1
+	{è}{{\`e}}1
+	{ẹ}{{\d e}}1
+	{ẻ}{{\h e}}1
+	{ẽ}{{\~ e}}1
+	%
+	{É}{{\'E}}1
+	{È}{{\`E}}1
+	{Ẹ}{{\d E}}1
+	{Ẻ}{{\h E}}1
+	{Ẽ}{{\~ E}}1
+%
+% Vần ê
+	{ê}{{\^e}}1
+	{ế}{{\'\ecircumflex }}1
+	{ề}{{\`\ecircumflex }}1
+	{ệ}{{\d \ecircumflex }}1
+	{ể}{{\h \ecircumflex }}1
+	{ễ}{{\~\ecircumflex }}1
+	%
+	{Ê}{{\^E}}1
+	{Ế}{{\'\ECIRCUMFLEX }}1
+	{Ề}{{\`\ECIRCUMFLEX }}1
+	{Ệ}{{\d \ECIRCUMFLEX }}1
+	{Ể}{{\h \ECIRCUMFLEX }}1
+	{Ễ}{{\~\ECIRCUMFLEX }}1
+%
+% Vần i
+	{í}{{\'i}}1
+	{ì}{{\`\i }}1
+	{ị}{{\d i}}1
+	{ỉ}{{\h i}}1
+	{ĩ}{{\~\i }}1
+	%
+	{Í}{{\'I}}1
+	{Ì}{{\`I}}1
+	{Ị}{{\d I}}1
+	{Ỉ}{{\h I}}1
+	{Ĩ}{{\~I}}1
+%
+% Vần o
+	{ó}{{\'o}}1
+	{ò}{{\`o}}1
+	{ọ}{{\d o}}1
+	{ỏ}{{\h o}}1
+	{õ}{{\~o}}1
+	%
+	{Ó}{{\'O}}1
+	{Ò}{{\`O}}1
+	{Ọ}{{\d O}}1
+	{Ỏ}{{\h O}}1
+	{Õ}{{\~O}}1
+%
+% Vần ô
+	{ô}{{\^o}}1
+	{ố}{{\'\ocircumflex }}1
+	{ồ}{{\`\ocircumflex }}1
+	{ộ}{{\d \ocircumflex }}1
+	{ổ}{{\h \ocircumflex }}1
+	{ỗ}{{\~\ocircumflex }}1
+	%
+	{Ô}{{\^O}}1
+	{Ố}{{\'\OCIRCUMFLEX }}1
+	{Ồ}{{\`\OCIRCUMFLEX }}1
+	{Ộ}{{\d \OCIRCUMFLEX }}1
+	{Ổ}{{\h \OCIRCUMFLEX }}1
+	{Ỗ}{{\~\OCIRCUMFLEX }}1
+%
+% Vần ơ
+	{ơ}{{\ohorn }}1
+	{ớ}{{\'\ohorn }}1
+	{ờ}{{\`\ohorn }}1
+	{ợ}{{\d \ohorn }}1
+	{ở}{{\h \ohorn }}1
+	{ỡ}{{\~\ohorn }}1
+	%
+	{Ơ}{{\OHORN }}1
+	{Ớ}{{\'\OHORN }}1
+	{Ờ}{{\`\OHORN }}1
+	{Ợ}{{\d \OHORN }}1
+	{Ở}{{\h \OHORN }}1
+	{Ỡ}{{\~\OHORN }}1
+%
+% Vần u
+	{ú}{{\'u}}1
+	{ù}{{\`u}}1
+	{ụ}{{\d u}}1
+	{ủ}{{\h u}}1
+	{ũ}{{\~u}}1
+	%
+	{Ú}{{\'U}}1
+	{Ù}{{\`U}}1
+	{Ụ}{{\d U}}1
+	{Ủ}{{\h U}}1
+	{Ũ}{{\~U}}1
+%
+% Vần ư
+	{ư}{{\uhorn }}1
+	{ứ}{{\'\uhorn }}1
+	{ừ}{{\`\uhorn }}1
+	{ự}{{\d \uhorn }}1
+	{ử}{{\h \uhorn }}1
+	{ữ}{{\~\uhorn }}1
+	%
+	{Ư}{{\UHORN }}1
+	{Ứ}{{\'\UHORN }}1
+	{Ừ}{{\`\UHORN }}1
+	{Ự}{{\d \UHORN }}1
+	{Ử}{{\h \UHORN }}1
+	{Ữ}{{\~\UHORN }}1
+%
+% Vần y
+	{ý}{{\'y}}1
+	{ỳ}{{\`y}}1
+	{ỵ}{{\d y}}1
+	{ỷ}{{\h y}}1
+	{ỹ}{{\~y}}1
+	%
+	{Ý}{{\'Y}}1
+	{Ỳ}{{\`Y}}1
+	{Ỵ}{{\d Y}}1
+	{Ỷ}{{\h Y}}1
+	{Ỹ}{{\~Y}}1,
+  language=SQL,
+  keywordstyle=\color{blue!90!black}\bfseries,
+  commentstyle=\color{green!60!black},
+  stringstyle=\color{violet},
+  showstringspaces=false,
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  backgroundcolor=\color{gray!2},
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  frame=single
+}
+
+\setlength{\headheight}{40pt}
+\pagestyle{fancy}
+\fancyhead{}
+\fancyhead[L]{
+ \begin{tabular}{rl}
+    \begin{picture}(25,15)(0,0)
+    \put(0,-8){\includegraphics[width=8mm, height=8mm]{hcmut.png}}
+    %\put(0,-8){\epsfig{width=10mm,figure=hcmut.eps}}
+   \end{picture}&
+	%\includegraphics[width=8mm, height=8mm]{hcmut.png} & %
+	\begin{tabular}{l}
+		\textbf{\bf \ttfamily TRƯỜNG ĐẠI HỌC BÁCH KHOA THÀNH PHỐ HỒ CHÍ MINH}\\
+		\textbf{\bf \ttfamily Khoa Khoa học và Kỹ thuật Máy tính}
+	\end{tabular} 	
+ \end{tabular}
+}
+\fancyhead[R]{
+	\begin{tabular}{l}
+		\tiny \bf \\
+		\tiny \bf 
+	\end{tabular}  }
+\fancyfoot{}
+\fancyfoot[L]{\scriptsize \ttfamily Mạng Máy Tính (TN) - CO3094}
+\fancyfoot[R]{\scriptsize \ttfamily Trang {\thepage}}
+\renewcommand{\headrulewidth}{0.3pt}
+\renewcommand{\footrulewidth}{0.3pt}
+
+\raggedbottom
+\begin{document}
+\pagenumbering{gobble}
+\begin{titlepage}
+\begin{center}
+\begin{tabular}{c}
+\Large ĐẠI HỌC QUỐC GIA THÀNH PHỐ HỒ CHÍ MINH\\
+\Large TRƯỜNG ĐẠI HỌC BÁCH KHOA TP. HỒ CHÍ MINH\\
+\Large KHOA KHOA HỌC VÀ KỸ THUẬT MÁY TÍNH\\
+\\
+\hline
+\end{tabular}
+\begin{figure}[H]
+\centering
+\includegraphics[width=5cm]{hcmut.png}
+\end{figure}    
+\begin{tabular}{c}
+\textbf{MẠNG MÁY TÍNH (TN) - CO3094}\\
+~~\\
+\hline
+\\
+\textbf{\Large LAB 1A}\\
+\\
+\hline
+~~\\
+\end{tabular}
+\\
+\vspace{2cm}
+\begin{tabular}{ll}
+    \textbf{Giảng viên hướng dẫn:}& Bùi Xuân Giang\\
+    \textbf{Sinh viên thực hiện:} & Phan Huy Quang Minh - 2312105\\
+\end{tabular}
+\vspace{2cm}
+\\
+\footnotesize Tp Hồ Chí Minh, Tháng 10/2025  
+\end{center}
+\end{titlepage}
+
+\pagenumbering{arabic}
+
+\section{Thu thập và mô tả yêu cầu}
+
+\subsection{Động lực, mục tiêu và phạm vi của dự án}
+
+\subsubsection{Động lực của dự án}
+
+\textbf{Hiện trạng:}
+
+Trong những năm gần đây, sự phát triển mạnh mẽ của Internet of Things (IoT)
+đã tạo điều kiện cho việc xây dựng các hệ thống nhà thông minh (Smart Home).
+Các thiết bị cảm biến và bộ điều khiển có thể được kết nối với mạng internet
+để thu thập dữ liệu môi trường và cho phép người dùng giám sát, điều khiển
+từ xa thông qua các nền tảng phần mềm.
+
+Trong môi trường sinh hoạt hàng ngày, các yếu tố như nhiệt độ, độ ẩm
+hoặc nguy cơ cháy nổ có thể ảnh hưởng trực tiếp đến sự an toàn
+và chất lượng cuộc sống của người dùng. Tuy nhiên, tại nhiều hộ gia đình,
+việc theo dõi các thông số môi trường này vẫn được thực hiện thủ công
+hoặc hoàn toàn không có hệ thống giám sát tự động.
+
+Do đó, việc xây dựng một hệ thống Smart Home có khả năng thu thập dữ liệu
+từ các cảm biến môi trường và cung cấp khả năng giám sát theo thời gian thực
+là cần thiết nhằm nâng cao mức độ an toàn và tiện nghi cho người sử dụng.
+
+\textbf{Bất cập:}
+
+\begin{itemize}
+
+\item \textbf{Thiếu hệ thống giám sát môi trường liên tục:}  
+Người dùng khó theo dõi nhiệt độ hoặc độ ẩm trong nhà một cách liên tục
+và không có công cụ hiển thị dữ liệu tập trung.
+
+\item \textbf{Không phát hiện sớm nguy cơ cháy:}  
+Nếu xảy ra hiện tượng cháy hoặc khói trong nhà, người dùng có thể không
+nhận biết kịp thời khi không có hệ thống cảnh báo tự động.
+
+\item \textbf{Thiếu khả năng theo dõi từ xa:}  
+Người dùng không thể kiểm tra trạng thái môi trường trong nhà khi
+không có mặt tại nhà.
+
+\item \textbf{Không có dữ liệu lịch sử:}  
+Người dùng không thể xem lại các dữ liệu môi trường trước đó để
+phân tích hoặc đánh giá tình trạng hoạt động của hệ thống.
+
+\item \textbf{Khó quản lý nhiều người dùng:}  
+Trong một hộ gia đình có nhiều thành viên, việc chia sẻ quyền truy cập
+hệ thống và quản lý người dùng chưa được hỗ trợ hiệu quả.
+
+\end{itemize}
+
+\textbf{Giải pháp:}
+
+Để giải quyết các vấn đề trên, hệ thống Smart Home giám sát môi trường
+sẽ được phát triển. Hệ thống này sử dụng các cảm biến như cảm biến
+nhiệt độ, cảm biến độ ẩm và cảm biến phát hiện cháy để thu thập dữ liệu
+từ môi trường trong nhà.
+
+Các cảm biến sẽ gửi dữ liệu định kỳ về hệ thống trung tâm.
+Hệ thống sẽ xử lý và lưu trữ dữ liệu, sau đó hiển thị thông tin
+trên giao diện web hoặc ứng dụng di động để người dùng có thể
+theo dõi trạng thái môi trường theo thời gian thực.
+
+Ngoài ra, hệ thống có thể kiểm tra các giá trị cảm biến
+với các ngưỡng an toàn được cấu hình trước.
+Nếu phát hiện các thông số vượt quá ngưỡng cho phép
+hoặc phát hiện nguy cơ cháy, hệ thống sẽ gửi cảnh báo
+đến người dùng để kịp thời xử lý.
+
+Hệ thống cũng lưu trữ lịch sử dữ liệu cảm biến,
+giúp người dùng có thể xem lại các thông số môi trường
+trong các khoảng thời gian khác nhau.
+
+Bên cạnh đó, hệ thống hỗ trợ nhiều người dùng
+trong cùng một hộ gia đình. Chủ nhà đóng vai trò
+quản trị viên (Admin) có quyền quản lý thiết bị,
+cấu hình ngưỡng cảnh báo và quản lý các thành viên khác.
+
+\subsubsection{Mục tiêu của dự án}
+
+\begin{itemize}
+
+\item Xây dựng hệ thống Smart Home cho phép thu thập dữ liệu
+từ các cảm biến nhiệt độ, độ ẩm và cảm biến phát hiện cháy.
+
+\item Cho phép người dùng theo dõi trạng thái môi trường
+trong nhà theo thời gian thực thông qua giao diện web
+hoặc ứng dụng di động.
+
+\item Phát hiện và cảnh báo khi các giá trị cảm biến
+vượt quá ngưỡng an toàn hoặc khi phát hiện nguy cơ cháy.
+
+\item Cung cấp khả năng lưu trữ và xem lại lịch sử dữ liệu
+môi trường để hỗ trợ việc theo dõi và phân tích.
+
+\item Xây dựng hệ thống quản lý người dùng cho phép
+chủ nhà quản lý quyền truy cập của các thành viên
+trong gia đình.
+
+\end{itemize}
+
+\subsubsection{Phạm vi của dự án}
+
+\textbf{Phần cứng}
+
+\begin{itemize}
+
+\item Cảm biến nhiệt độ.
+\item Cảm biến độ ẩm.
+\item Cảm biến phát hiện cháy hoặc khói.
+\item Bộ điều khiển trung tâm để thu thập và truyền dữ liệu
+từ các cảm biến về hệ thống.
+
+\end{itemize}
+
+\textbf{Phần mềm}
+
+\begin{itemize}
+
+\item Hệ thống backend tiếp nhận và xử lý dữ liệu từ cảm biến.
+
+\item Hệ thống kiểm tra các giá trị cảm biến với các ngưỡng
+được cấu hình trước.
+
+\item Hệ thống lưu trữ dữ liệu môi trường và lịch sử hoạt động.
+
+\item Dashboard hiển thị dữ liệu cảm biến theo thời gian thực.
+
+\end{itemize}
+
+\textbf{Ứng dụng Web/Mobile}
+
+\begin{itemize}
+
+\item Cho phép người dùng theo dõi dữ liệu nhiệt độ,
+độ ẩm và trạng thái hệ thống.
+
+\item Hiển thị cảnh báo khi phát hiện giá trị vượt ngưỡng
+hoặc nguy cơ cháy.
+
+\item Cho phép người dùng xem lịch sử dữ liệu cảm biến.
+
+\end{itemize}
+
+\textbf{Người dùng mục tiêu}
+
+\begin{itemize}
+
+\item Các hộ gia đình muốn giám sát môi trường trong nhà
+nhằm đảm bảo an toàn và tiện nghi.
+
+\item Người dùng muốn theo dõi trạng thái môi trường
+trong nhà từ xa thông qua internet.
+
+\end{itemize}
+
+\subsection{Yêu cầu chức năng và yêu cầu phi chức năng}
+
+\textbf{Các bên liên quan (Stakeholders):}
+
+\begin{itemize}
+
+\item \textbf{Home Owner (Admin):}  
+Chủ của căn nhà và là người quản trị hệ thống.
+Người này có quyền cấu hình hệ thống, quản lý thiết bị
+và quản lý các thành viên khác.
+
+\item \textbf{Household Member (User):}  
+Là các thành viên trong gia đình có quyền truy cập
+hệ thống để theo dõi dữ liệu môi trường và nhận cảnh báo.
+
+\item \textbf{IoT Devices:}  
+Bao gồm các cảm biến nhiệt độ, độ ẩm và cảm biến phát hiện cháy.
+Các thiết bị này có nhiệm vụ thu thập dữ liệu môi trường
+và gửi về hệ thống.
+
+\end{itemize}
+
+\subsubsection{Yêu cầu chức năng}
+
+\textbf{Household Member (User):}
+
+\begin{itemize}
+
+\item Đăng nhập vào hệ thống.
+
+\item Xem dữ liệu nhiệt độ và độ ẩm theo thời gian thực.
+
+\item Xem lịch sử dữ liệu cảm biến.
+
+\item Nhận thông báo khi hệ thống phát hiện giá trị
+vượt ngưỡng hoặc nguy cơ cháy.
+
+\end{itemize}
+
+\textbf{Home Owner (Admin):}
+
+Admin có tất cả các chức năng của User,
+ngoài ra còn có các chức năng sau:
+
+\begin{itemize}
+
+\item Quản lý các thiết bị cảm biến trong hệ thống.
+
+\item Quản lý người dùng (thêm, xóa và phân quyền).
+
+\item Cấu hình ngưỡng cảnh báo cho các cảm biến.
+
+\item Theo dõi toàn bộ lịch sử hoạt động của hệ thống.
+
+\end{itemize}
+
+\textbf{IoT Devices:}
+
+\begin{itemize}
+
+\item Thu thập dữ liệu môi trường (nhiệt độ, độ ẩm, trạng thái cháy).
+
+\item Gửi dữ liệu cảm biến định kỳ về hệ thống.
+
+\item Gửi tín hiệu cảnh báo khi phát hiện nguy cơ cháy.
+
+\end{itemize}
+
+\subsubsection{Yêu cầu phi chức năng}
+
+\textbf{Hiệu suất}
+
+\begin{itemize}
+
+\item Dữ liệu từ cảm biến phải được cập nhật gần thời gian thực.
+
+\item Hệ thống phải phản hồi các yêu cầu của người dùng
+trong thời gian ngắn.
+
+\end{itemize}
+
+\textbf{Độ tin cậy}
+
+\begin{itemize}
+
+\item Hệ thống phải hoạt động ổn định trong thời gian dài.
+
+\item Dữ liệu cảm biến phải được ghi nhận và lưu trữ đầy đủ.
+
+\end{itemize}
+
+\textbf{Khả năng mở rộng}
+
+\begin{itemize}
+
+\item Hệ thống phải hỗ trợ thêm cảm biến mới
+mà không ảnh hưởng đến hoạt động hiện tại.
+
+\end{itemize}
+
+\textbf{Tính bảo mật}
+
+\begin{itemize}
+
+\item Hệ thống phải có cơ chế xác thực người dùng.
+
+\item Phân quyền truy cập dựa trên vai trò (Admin và User).
+
+\item Dữ liệu truyền giữa thiết bị và hệ thống
+phải được bảo vệ.
+
+\end{itemize}
+
+\textbf{Tính thân thiện với người dùng}
+
+\begin{itemize}
+
+\item Giao diện dashboard phải đơn giản và dễ sử dụng.
+
+\item Người dùng có thể xem dữ liệu và cảnh báo
+chỉ với vài thao tác cơ bản.
+
+\end{itemize}
+
+\section{Use Case}
+
+\subsection{Sơ đồ tổng quan Use Case}
+
+Hệ thống Smart Home được thiết kế nhằm giám sát các điều kiện môi trường
+trong nhà thông qua các cảm biến như cảm biến độ ẩm, cảm biến nhiệt độ
+và cảm biến khói nhằm phát hiện nguy cơ cháy.
+
+
+
+Hình dưới đây mô tả sơ đồ Use Case tổng quan của hệ thống Smart Home.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{usecase_diagram.png}
+\caption{Use Case Diagram của hệ thống Smart Home}
+\end{figure}
+
+% =========================
+% USE CASE 1
+% =========================
+\subsubsection{Use Case: View Sensor Data}
+\begin{table}[H]
+\centering
+\begin{tabular}{|p{4cm}|p{11cm}|}
+\hline
+\textbf{Use-case name} & View Sensor Data \\ \hline
+
+\textbf{Description} &
+Cho phép người dùng xem dữ liệu môi trường từ các cảm biến trong nhà
+như nhiệt độ, độ ẩm và cảm biến khói theo thời gian thực. \\ \hline
+
+\textbf{Actors} &
+Home Owner, Household Member \\ \hline
+
+\textbf{Preconditions} &
+- Người dùng đã đăng nhập vào hệ thống. \newline
+- Các cảm biến đã được kết nối và gửi dữ liệu về hệ thống. \\ \hline
+
+\textbf{Trigger} &
+Người dùng truy cập vào trang Dashboard của hệ thống. \\ \hline
+
+\textbf{Post-conditions} &
+- Dữ liệu cảm biến được hiển thị cho người dùng. \\ \hline
+
+\textbf{Main flow} &
+1. Người dùng đăng nhập vào hệ thống. \newline
+2. Người dùng mở trang Dashboard. \newline
+3. Hệ thống lấy dữ liệu cảm biến mới nhất từ server. \newline
+4. Hệ thống hiển thị nhiệt độ, độ ẩm và trạng thái cảm biến khói. \\ \hline
+
+\textbf{Exceptions} &
+Tại bước 3: Nếu cảm biến không phản hồi → hệ thống hiển thị trạng thái "Offline". \\ \hline
+\end{tabular}
+\caption{Use-case: View Sensor Data}
+\end{table}
+
+
+% =========================
+% USE CASE 2
+% =========================
+\subsubsection{Use Case: View Device Status}
+\begin{table}[H]
+\centering
+\begin{tabular}{|p{4cm}|p{11cm}|}
+\hline
+\textbf{Use-case name} & View Device Status \\ \hline
+
+\textbf{Description} &
+Cho phép người dùng xem trạng thái hoạt động của các thiết bị
+trong hệ thống nhà thông minh như quạt, máy tạo ẩm hoặc thiết bị cảnh báo. \\ \hline
+
+\textbf{Actors} &
+Home Owner, Household Member \\ \hline
+
+\textbf{Preconditions} &
+- Người dùng đã đăng nhập vào hệ thống. \\ \hline
+
+\textbf{Trigger} &
+Người dùng truy cập trang quản lý thiết bị. \\ \hline
+
+\textbf{Post-conditions} &
+- Trạng thái của các thiết bị được hiển thị trên giao diện. \\ \hline
+
+\textbf{Main flow} &
+1. Người dùng truy cập trang "Devices". \newline
+2. Hệ thống truy vấn trạng thái của các thiết bị. \newline
+3. Hệ thống hiển thị trạng thái thiết bị (ON/OFF, Online/Offline). \\ \hline
+
+\textbf{Exceptions} &
+2: Thiết bị không phản hồi → hiển thị trạng thái "Disconnected". \\ \hline
+\end{tabular}
+\caption{Use-case: View Device Status}
+\end{table}
+
+
+% =========================
+% USE CASE 3
+% =========================
+\subsubsection{Use Case: Control Device Manually}
+\begin{table}[H]
+\centering
+\begin{tabular}{|p{4cm}|p{11cm}|}
+\hline
+\textbf{Use-case name} & Control Device Manually \\ \hline
+
+\textbf{Description} &
+Cho phép người dùng điều khiển trực tiếp các thiết bị
+trong hệ thống nhà thông minh thông qua giao diện web
+như bật hoặc tắt quạt, máy tạo ẩm hoặc hệ thống cảnh báo. \\ \hline
+
+\textbf{Actors} &
+Home Owner, Household Member \\ \hline
+
+\textbf{Preconditions} &
+- Người dùng đã đăng nhập vào hệ thống. \newline
+- Thiết bị đã được kết nối với hệ thống. \\ \hline
+
+\textbf{Trigger} &
+Người dùng nhấn nút điều khiển trên giao diện thiết bị. \\ \hline
+
+\textbf{Post-conditions} &
+- Thiết bị được điều khiển theo yêu cầu của người dùng. \newline
+- Trạng thái thiết bị được cập nhật trên hệ thống. \\ \hline
+
+\textbf{Main flow} &
+1. Người dùng truy cập giao diện thiết bị. \newline
+2. Người dùng chọn thiết bị cần điều khiển. \newline
+3. Người dùng chọn trạng thái mong muốn (ON/OFF). \newline
+4. Hệ thống gửi lệnh điều khiển đến thiết bị. \newline
+5. Thiết bị thực thi lệnh và gửi phản hồi. \newline
+6. Hệ thống cập nhật trạng thái thiết bị. \\ \hline
+
+\textbf{Exceptions} &
+Tại bước 4: Thiết bị không phản hồi → hệ thống hiển thị thông báo lỗi. \\ \hline
+\end{tabular}
+\caption{Use-case: Control Device Manually}
+\end{table}
+
+
+% =========================
+% USE CASE 4
+% =========================
+\subsubsection{Use Case: View Hardware Activity Logs}
+\begin{table}[H]
+\centering
+\begin{tabular}{|p{4cm}|p{11cm}|}
+\hline
+\textbf{Use-case name} & View Hardware Activity Logs \\ \hline
+
+\textbf{Description} &
+Cho phép người dùng xem lịch sử hoạt động của hệ thống
+bao gồm dữ liệu cảm biến, các sự kiện vượt ngưỡng
+và các thao tác điều khiển thiết bị. \\ \hline
+
+\textbf{Actors} &
+Home Owner \\ \hline
+
+\textbf{Preconditions} &
+- Người dùng đã đăng nhập vào hệ thống. \newline
+- Hệ thống đã lưu trữ dữ liệu log. \\ \hline
+
+\textbf{Trigger} &
+Người dùng truy cập trang "Activity Logs". \\ \hline
+
+\textbf{Post-conditions} &
+- Người dùng có thể theo dõi lịch sử hoạt động của hệ thống. \\ \hline
+
+\textbf{Main flow} &
+1. Người dùng mở trang Activity Logs. \newline
+2. Hệ thống truy xuất dữ liệu log từ cơ sở dữ liệu. \newline
+3. Hệ thống hiển thị các sự kiện như cập nhật cảm biến
+và điều khiển thiết bị. \\ \hline
+
+\textbf{Exceptions} &
+Tại bước 2: Không tìm thấy dữ liệu → hệ thống hiển thị thông báo "No logs available". \\ \hline
+\end{tabular}
+\caption{Use-case: View Hardware Activity Logs}
+\end{table}
+
+
+% =========================
+% USE CASE 5
+% =========================
+\subsubsection{Use Case: View Active Alerts}
+\begin{table}[H]
+\centering
+\begin{tabular}{|p{4cm}|p{11cm}|}
+\hline
+\textbf{Use-case name} & View Active Alerts \\ \hline
+
+\textbf{Description} &
+Cho phép người dùng xem các cảnh báo đang hoạt động
+khi dữ liệu cảm biến vượt quá ngưỡng an toàn
+ví dụ như nhiệt độ cao, độ ẩm quá thấp hoặc phát hiện khói. \\ \hline
+
+\textbf{Actors} &
+Home Owner, Household Member \\ \hline
+
+\textbf{Preconditions} &
+- Các cảm biến đang hoạt động và gửi dữ liệu về hệ thống. \newline
+- Ngưỡng cảnh báo đã được cấu hình. \\ \hline
+
+\textbf{Trigger} &
+Hệ thống phát hiện dữ liệu cảm biến vượt quá ngưỡng cho phép. \\ \hline
+
+\textbf{Post-conditions} &
+- Cảnh báo được hiển thị cho người dùng trên hệ thống. \\ \hline
+
+\textbf{Main flow} &
+1. Cảm biến gửi dữ liệu về hệ thống. \newline
+2. Hệ thống so sánh dữ liệu với ngưỡng đã cấu hình. \newline
+3. Nếu vượt ngưỡng → hệ thống tạo cảnh báo. \newline
+4. Cảnh báo được hiển thị trên dashboard. \newline
+5. Người dùng truy cập và xem chi tiết cảnh báo. \\ \hline
+
+\textbf{Exceptions} &
+Tại bước 1: Cảm biến ngừng gửi dữ liệu → hệ thống hiển thị cảnh báo "Sensor offline". \\ \hline
+\end{tabular}
+\caption{Use-case: View Active Alerts}
+\end{table}
+
+
+\subsubsection{Use Case: Configure Sensor Thresholds}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|p{10cm}|}
+\hline
+\textbf{Use-case name} & Configure Sensor Thresholds \\ \hline
+\textbf{Description} & Cho phép Admin cấu hình ngưỡng cảnh báo cho các cảm biến như nhiệt độ, độ ẩm và khói. \\ \hline
+\textbf{Actors} & Home Owner \\ \hline
+\textbf{Preconditions} &
+Admin đã đăng nhập. \\ \hline
+\textbf{Trigger} &
+Admin truy cập trang cấu hình cảm biến. \\ \hline
+\textbf{Post-conditions} &
+Ngưỡng cảnh báo được cập nhật vào hệ thống. \\ \hline
+\textbf{Main flow} &
+1. Admin truy cập trang cấu hình cảm biến. \newline
+2. Hệ thống hiển thị các giá trị ngưỡng hiện tại. \newline
+3. Admin chỉnh sửa giá trị. \newline
+4. Admin lưu cấu hình. \newline
+5. Hệ thống cập nhật cơ sở dữ liệu. \\ \hline
+\textbf{Alternative flow} &
+Không có. \\ \hline
+\textbf{Exceptions} &
+Giá trị nhập không hợp lệ. \\ \hline
+\end{tabular}
+\caption{Bảng mô tả Use Case Configure Sensor Thresholds}
+\end{table}
+
+
+
+\subsubsection{Use Case: Manage Users}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|p{10cm}|}
+\hline
+\textbf{Use-case name} & Manage Users \\ \hline
+Description & Cho phép Home Owner thêm, chỉnh sửa hoặc xóa thành viên trong hệ thống Smart Home. \\ \hline
+\textbf{Actors} & Home Owner \\ \hline
+\textbf{Preconditions} &
+Admin đã đăng nhập. \\ \hline
+\textbf{Trigger} &
+Admin truy cập trang quản lý người dùng. \\ \hline
+\textbf{Post-conditions} &
+Danh sách người dùng được cập nhật. \\ \hline
+\textbf{Main flow} &
+1. Admin mở trang quản lý người dùng. \newline
+2. Hệ thống hiển thị danh sách thành viên. \newline
+3. Admin thêm hoặc chỉnh sửa người dùng. \newline
+4. Hệ thống lưu dữ liệu vào cơ sở dữ liệu. \\ \hline
+\textbf{Alternative flow} &
+Không có. \\ \hline
+\textbf{Exceptions} &
+Không có. \\ \hline
+\end{tabular}
+\caption{Bảng mô tả Use Case Manage Users}
+\end{table}
+
+\subsubsection{Use Case: Manage Devices}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|p{4cm}|p{11cm}|}
+\hline
+\textbf{Use-case name} & Manage Devices \\ \hline
+
+\textbf{Description} &
+Cho phép quản trị viên (Admin) quản lý các thiết bị phần cứng trong hệ thống
+nhà thông minh, bao gồm thêm thiết bị mới, chỉnh sửa thông tin thiết bị
+hoặc xóa thiết bị khỏi hệ thống. \\ \hline
+
+\textbf{Actors} &
+Home Owner\\ \hline
+
+\textbf{Preconditions} &
+- Admin đã đăng nhập thành công vào hệ thống. \newline
+- Hệ thống dashboard đang hoạt động. \\ \hline
+
+\textbf{Trigger} &
+Admin truy cập vào trang quản lý thiết bị (Device Management). \\ \hline
+
+\textbf{Post-conditions} &
+- Danh sách thiết bị trong hệ thống được cập nhật. \newline
+- Thiết bị mới có thể bắt đầu gửi dữ liệu về hệ thống. \\ \hline
+
+\textbf{Main flow} &
+1. Admin truy cập giao diện quản lý thiết bị. \newline
+2. Hệ thống hiển thị danh sách các thiết bị hiện có. \newline
+3. Admin chọn hành động quản lý thiết bị (thêm, chỉnh sửa hoặc xóa). \newline
+4. Admin nhập hoặc cập nhật thông tin thiết bị. \newline
+5. Hệ thống kiểm tra tính hợp lệ của thông tin. \newline
+6. Hệ thống lưu thay đổi và cập nhật danh sách thiết bị. \\ \hline
+
+\textbf{Alternative flow} &
+3a. Admin chọn thêm thiết bị mới → hệ thống hiển thị form nhập thông tin. \newline
+3b. Admin chọn chỉnh sửa thiết bị → hệ thống hiển thị thông tin hiện tại. \newline
+3c. Admin chọn xóa thiết bị → hệ thống yêu cầu xác nhận trước khi xóa. \\ \hline
+
+\textbf{Exceptions} &
+Tại bước 5: Thông tin thiết bị không hợp lệ → hệ thống hiển thị thông báo lỗi. \newline
+Tại bước 6: Lỗi khi lưu dữ liệu → hệ thống giữ nguyên dữ liệu cũ. \\ \hline
+
+\end{tabular}
+\caption{Bảng mô tả Use Case Mange Devices}
+\end{table}
+
+\end{document}
