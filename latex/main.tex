@@ -236,7 +236,8 @@
 		\tiny \bf 
 	\end{tabular}  }
 \fancyfoot{}
-\fancyfoot[L]{\scriptsize \ttfamily Mạng Máy Tính (TN) - CO3094}
+\fancyfoot[L]{\scriptsize \ttfamily ĐỒ ÁN MÔN HỌC ĐA NGÀNH
+HƯỚNG CÔNG NGHỆ PHẦN MỀM (CO3109)}
 \fancyfoot[R]{\scriptsize \ttfamily Trang {\thepage}}
 \renewcommand{\headrulewidth}{0.3pt}
 \renewcommand{\footrulewidth}{0.3pt}
@@ -257,12 +258,14 @@
 \centering
 \includegraphics[width=5cm]{hcmut.png}
 \end{figure}    
-\begin{tabular}{c}
-\textbf{MẠNG MÁY TÍNH (TN) - CO3094}\\
+\begin{tabular}{l}
+\textbf{ĐỒ ÁN MÔN HỌC ĐA NGÀNH}\\
+\textbf{HƯỚNG CÔNG NGHỆ PHẦN MỀM(CO3109)}\\
 ~~\\
 \hline
 \\
-\textbf{\Large LAB 1A}\\
+\textbf{\Large Báo cáo đồ án (Học kỳ 252)}\\
+\textbf{\Large  HỆ THỐNG NGÔI NHÀ THÔNG MINH} \\
 \\
 \hline
 ~~\\
@@ -270,12 +273,16 @@
 \\
 \vspace{2cm}
 \begin{tabular}{ll}
-    \textbf{Giảng viên hướng dẫn:}& Bùi Xuân Giang\\
+    \textbf{Giảng viên hướng dẫn:}& Nguyễn Hữu Hiếu\\
     \textbf{Sinh viên thực hiện:} & Phan Huy Quang Minh - 2312105\\
+	 & Võ Ngọc	Triều - 2213614\\
+	 & Trần Phạm Minh Hiếu - 2310979\\
+	 & Huỳnh Võ Quốc Thắng - 2313180\\
+	 & Nguyễn Bảo Trọng - 2313646\\
 \end{tabular}
 \vspace{2cm}
 \\
-\footnotesize Tp Hồ Chí Minh, Tháng 10/2025  
+\footnotesize Tp Hồ Chí Minh, Tháng 3/2026
 \end{center}
 \end{titlepage}
 
@@ -385,15 +392,34 @@ trong gia đình.
 
 \textbf{Phần cứng}
 
-\begin{itemize}
+\begin{table}[htbp]
+\centering
+\caption{Danh sách thiết bị Đầu vào}
+\label{tab:inputs}
+\begin{tabular}{|l|l|l|l|}
+\hline
+\textbf{Thiết bị} & \textbf{Cổng kết nối} & \textbf{Loại tín hiệu} & \textbf{Giá trị cụ thể (Input)} \\ \hline
+Cảm biến DHT20 & I2C & Số (Digital) & Nhiệt độ ($^\circ$C) và Độ ẩm (\%) \\ \hline
+Cảm biến Ánh sáng & Pin 2 & Tương tự (Analog) & Cường độ ánh sáng ($0 - 100\%$) \\ \hline
+Mắt thu Hồng ngoại (IR) & Pin 1 & Số (Digital) & Nhận diện có người \\ \hline
+\end{tabular}
+\end{table}
 
-\item Cảm biến nhiệt độ.
-\item Cảm biến độ ẩm.
-\item Cảm biến phát hiện cháy hoặc khói.
-\item Bộ điều khiển trung tâm để thu thập và truyền dữ liệu
-từ các cảm biến về hệ thống.
 
-\end{itemize}
+\begin{table}[htbp]
+\centering
+\caption{Danh sách thiết bị Đầu ra }
+\label{tab:outputs}
+\begin{tabular}{|l|l|l|l|}
+\hline
+\textbf{Thiết bị} & \textbf{Cổng kết nối} & \textbf{Loại tín hiệu} & \textbf{Hành động (Output)} \\ \hline
+Màn hình LCD 16x2 & I2C & Số (Digital) & Hiển thị thông số, thời gian, trạng thái \\ \hline
+Động cơ Servo & Pin 4 & Xung (PWM) & Góc quay: $90^\circ$ (Mở) / $0^\circ$ (Đóng) \\ \hline
+Quạt mini (Mini Fan) & Pin 10 & Tương tự (Analog) & Tốc độ quay từ $0 - 100\%$ \\ \hline
+Đèn LED RGB (4 LED) & Pin 0 & Số (Digital) & Màu sắc (Mã Hex) và trạng thái Bật/Tắt \\ \hline
+\end{tabular}
+\end{table}
+
 
 \textbf{Phần mềm}
 
