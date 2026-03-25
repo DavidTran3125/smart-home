@@ -14,7 +14,7 @@
 
 #define LIGHT_SENSOR_PIN 33
 #define led1_PIN 32    
-#define FAN_PIN 27
+#define FAN_PIN 26
 #define door_PIN 15
 #define UP_BUTTON_PIN 18
 #define DOWN_BUTTON_PIN 19
@@ -46,3 +46,4 @@ extern uint8_t global_second;
 extern float glob_temperature;
 extern float glob_humidity;
 extern float glob_light;
+extern float glob_fan_speed;

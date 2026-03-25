@@ -11,6 +11,8 @@ Adafruit_MQTT_Publish light = Adafruit_MQTT_Publish(&mqtt, AIO_USERNAME "/feeds/
 Adafruit_MQTT_Publish servo = Adafruit_MQTT_Publish(&mqtt, AIO_USERNAME "/feeds/servo");  
 Adafruit_MQTT_Publish temp = Adafruit_MQTT_Publish(&mqtt, AIO_USERNAME "/feeds/temp");  
 
+Adafruit_MQTT_Subscribe controll_fan = Adafruit_MQTT_Subscribe(&mqtt, AIO_USERNAME "/feeds/fan");
+
 void MQTT_connect();
 
 void setup()
@@ -27,7 +29,9 @@ void setup()
   Serial.println("\nWiFi connected");
   Serial.println(WiFi.localIP());
 
-  // 2. Đồng bộ NTP
+  // 2. Kết nối MQTT
+  mqtt.subscribe(&controll_fan);
+  // 3. Đồng bộ NTP
   configTime(7 * 3600, 0, "pool.ntp.org");
   struct tm timeinfo;
   if (getLocalTime(&timeinfo)) {
@@ -39,14 +43,27 @@ void setup()
     global_second = timeinfo.tm_sec;
   }
 
-  // 3. Chạy Tasks
+  // 4. Chạy Tasks
   xTaskCreate(LCD, "LCD", 4096, NULL, 2, NULL);
   xTaskCreate(temp_humi_monitor, "Task Temp Humi Monitor", 4096, NULL, 1, NULL);
+  xTaskCreate(Light_Task, "Task Light Monitor", 4096, NULL, 1, NULL);
+  xTaskCreate(Fan_Task, "Task Fan Control", 4096, NULL, 1, NULL);
 }
 
 void loop(){
   MQTT_connect();
   Adafruit_MQTT_Subscribe *subscription;
+  // nếu subscribe thành công, hiển thị giá trị nhận được và cập nhật biến toàn cục glob_fan_speed
+  while ((subscription = mqtt.readSubscription(1000))) {
+     if (subscription == &controll_fan) {
+        // Chuyển giá trị nhận được từ text sang số thực (float)
+        Serial.print("Giá trị nhận được từ MQTT: ");
+        Serial.println((char *)controll_fan.lastread);
+        glob_fan_speed = atof((char *)controll_fan.lastread); 
+        Serial.print("Tốc độ quạt mới: ");
+        Serial.println(glob_fan_speed);
+    }
+  }
 }
 
 

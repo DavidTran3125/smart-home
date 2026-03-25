@@ -11,6 +11,7 @@ uint8_t global_second = 9;
 float glob_temperature = 0.0;
 float glob_humidity = 0.0;
 float glob_light = 0.0;
+float glob_fan_speed = 0.0;
 
 void temp_humi_monitor(void *pvParameters){
     dht20.begin();
@@ -73,3 +74,27 @@ void LCD (void *pvParameters){
     }
 }
 
+void Light_Task (void* pvParameter){
+   //Setup Light sensor
+   pinMode(LIGHT_SENSOR_PIN, INPUT); // Set the pin as input
+
+   while(1){
+      glob_light = (analogRead(LIGHT_SENSOR_PIN)*100)/4095; // Read the light sensor value
+      light.publish(glob_light);
+      #if SERIAL_PRINT_DATA == 1
+         Serial.print(F("Light: "));
+         Serial.print(glob_light);
+         Serial.print(F("%\n"));
+      #endif
+      vTaskDelay(20000 / portTICK_PERIOD_MS); // Delay of 20 second
+   }
+}
+
+void Fan_Task(void* pvParameter){
+    pinMode(FAN_PIN, OUTPUT);
+    while(1){
+        // Nếu nhận được giá trị từ adafruit IO, bật quạt theo tốc độ nhận được
+        analogWrite(FAN_PIN, glob_fan_speed); // Điều chỉnh tốc độ quạt
+        vTaskDelay(100 / portTICK_PERIOD_MS); // Delay of 100ms
+    }
+}

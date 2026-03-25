@@ -18,3 +18,5 @@ extern uint8_t lcd_counter;
 
 extern void temp_humi_monitor(void *pvParameters);
 extern void LCD (void *pvParameters);
+extern void Light_Task(void *pvParameters);
+extern void Fan_Task(void *pvParameters);
