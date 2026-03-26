@@ -12,7 +12,7 @@ Adafruit_MQTT_Publish servo = Adafruit_MQTT_Publish(&mqtt, AIO_USERNAME "/feeds/
 Adafruit_MQTT_Publish temp = Adafruit_MQTT_Publish(&mqtt, AIO_USERNAME "/feeds/temp");  
 
 Adafruit_MQTT_Subscribe controll_fan = Adafruit_MQTT_Subscribe(&mqtt, AIO_USERNAME "/feeds/fan");
-
+Adafruit_MQTT_Subscribe controll_servo = Adafruit_MQTT_Subscribe(&mqtt, AIO_USERNAME "/feeds/servo");
 void MQTT_connect();
 
 void setup()
@@ -21,6 +21,7 @@ void setup()
   Serial.begin(115200);
   delay(2000);
   Wire.begin(21, 22);
+  pinMode(SERVO_PIN, OUTPUT);
   WiFi.begin(WLAN_SSID, WLAN_PASS);
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
@@ -31,6 +32,7 @@ void setup()
 
   // 2. Kết nối MQTT
   mqtt.subscribe(&controll_fan);
+  mqtt.subscribe(&controll_servo);
   // 3. Đồng bộ NTP
   configTime(7 * 3600, 0, "pool.ntp.org");
   struct tm timeinfo;
@@ -44,6 +46,7 @@ void setup()
   }
 
   // 4. Chạy Tasks
+  setupDoorTask();
   xTaskCreate(LCD, "LCD", 4096, NULL, 2, NULL);
   xTaskCreate(temp_humi_monitor, "Task Temp Humi Monitor", 4096, NULL, 1, NULL);
   xTaskCreate(Light_Task, "Task Light Monitor", 4096, NULL, 1, NULL);
@@ -62,6 +65,14 @@ void loop(){
         glob_fan_speed = atof((char *)controll_fan.lastread); 
         Serial.print("Tốc độ quạt mới: ");
         Serial.println(glob_fan_speed);
+    }
+    if (subscription == &controll_servo) {
+        // Chuyển giá trị nhận được từ text sang số thực (float)
+        Serial.print("Giá trị nhận được từ MQTT: ");
+        Serial.println((char *)controll_servo.lastread);
+        if (controll_servo.lastread[0] == 'A') glob_servo_angle = 90;
+        Serial.print("Góc servo mới: ");
+        Serial.println(glob_servo_angle);
     }
   }
 }

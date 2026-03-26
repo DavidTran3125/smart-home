@@ -12,6 +12,7 @@ float glob_temperature = 0.0;
 float glob_humidity = 0.0;
 float glob_light = 0.0;
 float glob_fan_speed = 0.0;
+float glob_servo_angle = 0.0;
 
 void temp_humi_monitor(void *pvParameters){
     dht20.begin();
@@ -95,6 +96,25 @@ void Fan_Task(void* pvParameter){
     while(1){
         // Nếu nhận được giá trị từ adafruit IO, bật quạt theo tốc độ nhận được
         analogWrite(FAN_PIN, glob_fan_speed); // Điều chỉnh tốc độ quạt
+        vTaskDelay(100 / portTICK_PERIOD_MS); // Delay of 100ms
+    }
+}
+
+Servo myservo;    
+void setupDoorTask(){
+   myservo.attach(SERVO_PIN); // kết nối servo với chân door_PIN
+   myservo.write(0); // Đặt vị trí ban đầu của servo là 0 độ
+}
+
+void Servo_Task(void* pvParameter){
+    while(1){
+        // Nếu nhận được giá trị từ adafruit IO, điều chỉnh servo theo giá trị nhận được
+        // Ví dụ: nếu glob_servo_angle là góc điều chỉnh của servo, bạn có thể sử dụng hàm analogWrite để điều khiển servo
+        if (glob_servo_angle >= 0 && glob_servo_angle <= 180) { // Kiểm tra nếu góc hợp lệ
+            myservo.write(90);
+            delay(3000);        // Đợi đúng 3 giây (3000ms)
+            myservo.write(0);   // Tự động đóng lại
+        }
         vTaskDelay(100 / portTICK_PERIOD_MS); // Delay of 100ms
     }
 }

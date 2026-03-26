@@ -20,3 +20,5 @@ extern void temp_humi_monitor(void *pvParameters);
 extern void LCD (void *pvParameters);
 extern void Light_Task(void *pvParameters);
 extern void Fan_Task(void *pvParameters);
+extern void Servo_Task(void* pvParameter);
+extern void setupDoorTask();

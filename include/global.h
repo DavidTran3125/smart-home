@@ -6,6 +6,7 @@
 #include "Adafruit_NeoPixel.h"
 #include "DHT20.h"
 #include "time.h"
+#include "ESP32Servo.h"
 
 #define AIO_SERVER      "io.adafruit.com"
 #define AIO_SERVERPORT  1883                                 // use 8883 for SSL
@@ -15,11 +16,11 @@
 #define LIGHT_SENSOR_PIN 33
 #define led1_PIN 32    
 #define FAN_PIN 26
-#define door_PIN 15
 #define UP_BUTTON_PIN 18
 #define DOWN_BUTTON_PIN 19
 #define OK_BUTTON_PIN 23
 #define CHANGE_BUTTON_PIN 5
+#define SERVO_PIN 15
 
 #define WLAN_SSID       "HTS"   // Replace with your Wi-Fi SSID
 #define WLAN_PASS       "00000010"   // Replace with your Wi-Fi Password
@@ -47,3 +48,5 @@ extern float glob_temperature;
 extern float glob_humidity;
 extern float glob_light;
 extern float glob_fan_speed;
+extern float glob_servo_angle;
+extern Servo myservo;
