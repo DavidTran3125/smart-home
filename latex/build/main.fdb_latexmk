@@ -1,8 +1,8 @@
 # Fdb version 4
-["pdflatex"] 1772810186.06478 "/home/m1nhph4n/hk252/DADN/latex/main.tex" "build/main.pdf" "main" 1772810187.05185 0
+["pdflatex"] 1774329448.05536 "/home/m1nhph4n/hk252/DADN/latex/main.tex" "build/main.pdf" "main" 1774329449.19954 0
   "/etc/texmf/web2c/texmf.cnf" 1772771619.70206 475 c0e671620eb5563b2130f56340a5fde8 ""
   "/home/m1nhph4n/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/ec/tcrm1000.600pk" 1772780604.12571 11524 16e4279aa3927f3c6fb6ad7600519b14 ""
-  "/home/m1nhph4n/hk252/DADN/latex/main.tex" 1772810184.65472 28314 0aff873e1ccee6ab12252ee404e82f8b ""
+  "/home/m1nhph4n/hk252/DADN/latex/main.tex" 1774329446.37864 36875 c1ee24328f6865ff5f2b69d124899816 ""
   "/usr/share/texlive/texmf-dist/fonts/map/fontname/texfonts.map" 1577235249 3524 cb3e574dea2d1052e39280babc910dc8 ""
   "/usr/share/texlive/texmf-dist/fonts/tfm/jknappen/ec/tcrm0500.tfm" 1136768653 1536 b3387106d9afecbfe14bde2de6eadf47 ""
   "/usr/share/texlive/texmf-dist/fonts/tfm/jknappen/ec/tcrm0700.tfm" 1136768653 1536 73da8e8f1d2a4c957d51ca133585586b ""
@@ -27,6 +27,7 @@
   "/usr/share/texlive/texmf-dist/fonts/tfm/vntex/vnr/vnr8.tfm" 1647811568 3984 233206e6f80a2fd00ed2ee2bf783da65 ""
   "/usr/share/texlive/texmf-dist/fonts/tfm/vntex/vnr/vntt10.tfm" 1647811568 1340 1f050e88f9cfabe402b16c8ea7930ea1 ""
   "/usr/share/texlive/texmf-dist/fonts/tfm/vntex/vnr/vntt8.tfm" 1647811568 1340 ff37fa0e63ccbe0a2edad5c728ba14fc ""
+  "/usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb" 1248133631 36299 5f9df58c2139e7edcf37c8fca4bd384d ""
   "/usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb" 1248133631 35752 024fb6c41858982481f6968b5fc26508 ""
   "/usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb" 1248133631 32569 5e5ddc8df908dea60932f3c484a54c0d ""
   "/usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb" 1248133631 32716 08e384dc442464e7285e891af9f45947 ""
@@ -80,6 +81,7 @@
   "/usr/share/texlive/texmf-dist/tex/latex/base/ulasy.fd" 1705352648 2233 223b021f06a068bcbf05919274832728 ""
   "/usr/share/texlive/texmf-dist/tex/latex/cite/cite.sty" 1425427964 26218 19edeff8cdc2bcb704e8051dc55eb5a7 ""
   "/usr/share/texlive/texmf-dist/tex/latex/diagbox/diagbox.sty" 1583276710 14481 3bd2c6a722b221038c31c25ef3d51ba6 ""
+  "/usr/share/texlive/texmf-dist/tex/latex/enumitem/enumitem.sty" 1561238569 51697 f8f08183cd2080d9d18a41432d651dfb ""
   "/usr/share/texlive/texmf-dist/tex/latex/epstopdf-pkg/epstopdf-base.sty" 1579991033 13886 d1306dcf79a944f6988e688c1785f9ce ""
   "/usr/share/texlive/texmf-dist/tex/latex/etoolbox/etoolbox.sty" 1601931149 46845 3b58f70c6e861a13d927bff09d35ecbc ""
   "/usr/share/texlive/texmf-dist/tex/latex/fancyhdr/fancyhdr.sty" 1668028059 18450 88279bf67c81e69f8e3f1c1bad1a26c5 ""
@@ -140,10 +142,10 @@
   "/usr/share/texmf/web2c/texmf.cnf" 1707919699 40399 f2c302f7d2af602abb742093540a5834 ""
   "/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map" 1772781345.75472 198142 16d6a54cbe5ab31460400710ee1222d6 ""
   "/var/lib/texmf/web2c/pdftex/pdflatex.fmt" 1772781364 6927039 d41c7b57989a58b644fa7b55a841c45e ""
-  "build/main.aux" 1772810186.95455 4598 b4a4caa5451d8624ba1296042e60af06 "pdflatex"
-  "build/main.out" 1772810186.95455 3853 5abb79024558383dd27e7f2d02beedf5 "pdflatex"
+  "build/main.aux" 1774329449.08264 6784 baf3bc59cd0ddb06ad969accf5e661cf "pdflatex"
+  "build/main.out" 1774329449.08697 7830 b30161783ea1b6b4cccc0d6ae004211e "pdflatex"
   "hcmut.png" 1772780439.18883 15500 b85199d390c32b9ce783bfe480d12d6b ""
-  "main.tex" 1772810184.65472 28314 0aff873e1ccee6ab12252ee404e82f8b ""
+  "main.tex" 1774329446.37864 36875 c1ee24328f6865ff5f2b69d124899816 ""
   "usecase_diagram.png" 1772793078.85182 253159 e80ef0430f730ce62c2ea7841fe78ddc ""
   (generated)
   "build/main.aux"

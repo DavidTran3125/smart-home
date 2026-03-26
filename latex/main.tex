@@ -3,6 +3,7 @@
 \usepackage{a4wide,amssymb,epsfig,latexsym,array,hhline,fancyhdr}
 \usepackage{graphicx}
 \usepackage{float}
+\usepackage{enumitem}
 \usepackage{cite}
 \usepackage{gensymb}
 \usepackage{amsmath}
@@ -586,7 +587,7 @@ chỉ với vài thao tác cơ bản.
 
 \end{itemize}
 
-\section{Use Case}
+\section{Thiết kế use-case diagram}
 
 \subsection{Sơ đồ tổng quan Use Case}
 
@@ -915,5 +916,116 @@ Tại bước 6: Lỗi khi lưu dữ liệu → hệ thống giữ nguyên dữ 
 \end{tabular}
 \caption{Bảng mô tả Use Case Mange Devices}
 \end{table}
+
+
+\section{Thiết kế mô hình (mock-up) với Figma}
+
+\section{Thiết kế kiến trúc phần mềm và lựa chọn công nghệ}
+Để xác định mô hình kiến trúc phù hợp, nhóm xem xét các đặc điểm vận hành cốt lõi của hệ thống Smart Home:
+\begin{itemize}[leftmargin=*]
+\item Điều khiển và phản hồi tức thời: Đảm bảo giao tiếp hai chiều thông suốt với phần cứng (Servo, quạt, đèn, còi). Ưu tiên xử lý các sự kiện khẩn cấp (phát hiện khói, quá nhiệt) với độ trễ tối thiểu.
+
+\item Giám sát thời gian thực (Real-time): Đồng bộ dữ liệu liên tục giữa Backend (Node.js) và Frontend (React) thông qua WebSockets/MQTT, hiển thị tức thì trên cả Web Dashboard và màn hình LCD.
+
+\item Tích hợp cảm biến và lưu trữ linh hoạt: Xử lý đồng thời dữ liệu đa nguồn (DHT20, ánh sáng, IR, khói) và lưu trữ hiệu quả dưới dạng Document trên MongoDB để tối ưu truy xuất.
+
+\item Quản lý lịch sử và phân tích: Duy trì hệ thống log hoạt động khoa học, hỗ trợ người dùng theo dõi sự kiện và phân tích xu hướng tiêu thụ điện năng.
+
+\item Tính mở rộng và bảo trì: Kiến trúc module hóa giúp dễ dàng tích hợp thiết bị mới, nâng cấp các thuật toán AI và quản lý phân quyền (Admin/User) chặt chẽ.
+\end{itemize}
+Từ những yêu cầu trên, nhóm đề xuất sử dụng kiến trúc MVC (Model-View-Controller) kết hợp Hướng sự kiện (Event-Driven) trên nền tảng MERN stack. Đây là giải pháp tối ưu giúp hệ thống vận hành hiệu quả, đảm bảo tính bền vững, bảo mật và khả năng mở rộng linh hoạt trong tương lai.
+
+
+\subsection{Chi tiết các thành phần trong kiến trúc MVC}
+Việc áp dụng mô hình MVC giúp phân tách rõ ràng giữa dữ liệu, giao diện và logic điều khiển, tạo điều kiện thuận lợi cho việc phát triển song song và bảo trì hệ thống.
+
+\subsubsection{Model (M) - Quản lý dữ liệu và Logic nghiệp vụ}
+Lớp Model chịu trách nhiệm định nghĩa cấu trúc dữ liệu và tương tác với cơ sở dữ liệu MongoDB. Trong hệ thống Smart Home, Model được chia thành các nhóm thực thể chính:
+
+\begin{itemize}
+    \item \textbf{Quản lý thiết bị \& Cảm biến:}
+    \begin{itemize}
+        \item \textbf{SensorModel:} Lưu trữ thông số từ DHT20 (nhiệt độ, độ ẩm), cảm biến ánh sáng và cảm biến khói.
+        \item \textbf{DeviceModel:} Quản lý trạng thái vật lý của các thiết bị chấp hành (Trạng thái đóng/mở cửa của Servo, tốc độ quạt, màu sắc đèn LED).
+    \end{itemize}
+    
+    \item \textbf{Quản lý vận hành:}
+    \begin{itemize}
+        \item \textbf{LogModel \& RecordModel:} Ghi lại lịch sử thay đổi trạng thái và dữ liệu cảm biến theo thời gian thực để vẽ biểu đồ thống kê.
+        \item \textbf{AutomationModel:} Lưu trữ các ngưỡng (thresholds) cấu hình (ví dụ: nhiệt độ $> 30^\circ$C thì bật quạt).
+    \end{itemize}
+    
+    \item \textbf{Quản lý người dùng:}
+    \begin{itemize}
+        \item \textbf{UserModel:} Quản lý thông tin tài khoản, mật khẩu (đã mã hóa) và phân quyền truy cập.
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{View (V) - Giao diện hiển thị}
+Lớp View cung cấp phương thức tương tác giữa người dùng và hệ thống, được tối ưu hóa cho nhiều nền tảng:
+
+\begin{itemize}
+    \item \textbf{Dashboard Web (React.js \& Tailwind CSS):}
+    \begin{itemize}
+        \item \textbf{RealtimeStatusView:} Hiển thị các widget dữ liệu biến đổi liên tục (nhiệt độ, độ ẩm).
+        \item \textbf{ControlPanelView:} Các nút gạt, thanh trượt để điều khiển thiết bị (quạt, đèn, cửa) một cách trực quan.
+        \item \textbf{HistoryChartView:} Sử dụng thư viện biểu đồ để trực quan hóa dữ liệu lịch sử từ MongoDB.
+    \end{itemize}
+    
+    \item \textbf{Giao diện tại chỗ (LCD):}
+    \begin{itemize}
+        \item \textbf{LCD\_DisplayView:} Hiển thị các thông tin khẩn cấp và trạng thái kết nối trực tiếp tại phần cứng.
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Controller (C) - Điều phối logic hệ thống}
+Lớp Controller đóng vai trò là bộ não điều khiển luồng thông tin:
+
+\begin{itemize}
+    \item \textbf{DeviceController:} Nhận tín hiệu điều khiển từ Web View, kiểm tra quyền hạn và gửi lệnh xuống phần cứng thông qua giao thức MQTT.
+    \item \textbf{SensorController:} Tiếp nhận dữ liệu từ Gateway, xử lý lọc nhiễu và cập nhật vào Model, đồng thời đẩy dữ liệu lên View qua WebSockets.
+    \item \textbf{AuthController:} Xử lý các tác vụ đăng nhập, đăng xuất và bảo mật phiên làm việc của chủ nhà.
+\end{itemize}
+
+\subsection{Áp dụng Design Patterns nâng cao}
+Để giải quyết các bài toán đặc thù của IoT như xử lý bất đồng bộ và quản lý tài nguyên, hệ thống tích hợp các mẫu thiết kế sau:
+
+\subsubsection{Observer Pattern (Xử lý dữ liệu thời gian thực)}
+Trong môi trường Smart Home, dữ liệu cảm biến thay đổi liên tục. Thay vì View phải liên tục gửi yêu cầu (polling), hệ thống sử dụng Observer Pattern:
+
+\begin{itemize}
+    \item \textbf{Subject:} SensorDataStream.
+    \item \textbf{Observers:} DatabaseLogger, LiveDashboard, AlertSystem.
+    \item \textbf{Cơ chế:} Ngay khi cảm biến khói hoặc DHT20 gửi dữ liệu mới, SensorDataStream sẽ tự động "thông báo" cho các Observer để thực hiện ghi log, cập nhật giao diện và kiểm tra ngưỡng báo động cùng một lúc.
+\end{itemize}
+
+\subsubsection{Singleton Pattern (Quản lý kết nối duy nhất)}
+Việc khởi tạo quá nhiều kết nối đến MongoDB hoặc MQTT Broker sẽ gây lãng phí tài nguyên và xung đột dữ liệu.
+
+\begin{itemize}
+    \item \textbf{Áp dụng:} Lớp DatabaseClient và MQTTBrokerClient được thiết kế theo dạng Singleton để đảm bảo toàn bộ ứng dụng chỉ sử dụng một kết nối duy nhất, giúp tối ưu hóa hiệu suất và dễ dàng quản lý trạng thái kết nối.
+\end{itemize}
+
+\subsubsection{Factory Method Pattern (Khả năng mở rộng thiết bị)}
+Để đáp ứng yêu cầu "hỗ trợ thêm cảm biến mới mà không ảnh hưởng thành phần cốt lõi":
+
+\begin{itemize}
+    \item \textbf{Áp dụng:} Sử dụng DeviceFactory để khởi tạo các đối tượng thiết bị. Khi cần tích hợp thêm một loại cảm biến mới (ví dụ: cảm biến chất lượng không khí), nhóm chỉ cần tạo một lớp kế thừa từ giao diện chung mà không phải sửa đổi logic trong Controller chính.
+\end{itemize}
+
+\subsection{Sơ đồ lớp (Class Diagram)}
+Sơ đồ dưới đây minh họa sự tương tác giữa các thành phần M-V-C và cách các Design Patterns được nhúng vào cấu trúc phần mềm của dự án Smart Home.
+
+\subsection{Đánh giá tính hiệu quả của kiến trúc đề xuất}
+Việc lựa chọn kiến trúc Hybrid (MVC + Event-Driven) kết hợp cùng bộ stack công nghệ MERN mang lại các lợi ích vượt trội:
+
+\begin{itemize}
+    \item \textbf{Tính đóng gói cao:} Mỗi module (cảm biến, điều khiển, thông báo) hoạt động độc lập, giúp việc gỡ lỗi (debug) trở nên dễ dàng hơn.
+    \item \textbf{Trải nghiệm người dùng mượt mà:} Nhờ React và WebSockets, các trạng thái bật/tắt thiết bị hoặc cảnh báo cháy được phản hồi gần như ngay lập tức, tạo cảm giác tin cậy cho hệ thống an ninh nhà ở.
+    \item \textbf{Tối ưu hóa dữ liệu:} MongoDB lưu trữ dữ liệu dạng JSON tương thích hoàn toàn với Node.js, giúp giảm thiểu thời gian chuyển đổi dữ liệu (parsing), tăng tốc độ xử lý tổng thể của hệ thống.
+\end{itemize}
+
+\section{Thiết kế Database}
+\subsection{}
 
 \end{document}
