@@ -1,5 +1,5 @@
-import config from './index.js'
-
+import config from './index.js';
+import mqtt from 'mqtt';
 
 const MQTT_URL = `mqtts://${config.aio_username}:${config.aio_key}@io.adafruit.com`;
 const client = mqtt.connect(MQTT_URL);
@@ -9,13 +9,11 @@ let latestData = {};
 client.on('connect', () => {
     console.log('✅ Đã kết nối thành công tới Adafruit MQTT broker');
 
-    // Subscribe vào các feed (cảm biến, thiết bị)
-    // Thay 'cambien1' bằng tên feed thực tế của bạn trên Adafruit
-    // const feedsToListen = ['cambien1', 'nhietdo', 'doam', 'maybom1'];
-    const feedsToListen = ['bbc-door', 'bbc-temp', 'bbc-moist', 'bbc-move', 'bbc-fan']
+
+    const feedsToListen = ['fan', 'humid', 'ledred', 'ledrgb', 'light', 'servo', 'temp']
 
     feedsToListen.forEach((feed) => {
-        client.subscribe(`${AIO_USERNAME}/feeds/${feed}`, (err) => {
+        client.subscribe(`${config.aio_username}/feeds/${feed}`, (err) => {
             if (err) {
                 console.error(`❌ Lỗi khi đăng ký feed ${feed}`, err);
             } else {

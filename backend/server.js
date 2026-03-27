@@ -1,11 +1,15 @@
-require('dotenv').config();
-const express = require('express');
-const mqtt = require('mqtt');
+// import dotenv from 'dotenv';
+import express from 'express';
+import mqttConfig from './src/config/mqtt.js';
+import config from './src/config/index.js';
+// dotenv.config();
+
+const { client, latestData } = mqttConfig;
+
 
 const app = express();
 const port = 3000;
 
-// Middleware phân giải JSON body cho các request POST/PUT
 app.use(express.json());
 
 
@@ -16,8 +20,6 @@ app.get('/api/iot-data', (req, res) => {
         data: latestData
     });
 });
-
-// API nhận lệnh từ FE/Mobile và gửi tín hiệu cho thiết bị (VD: Bật máy bơm)
 app.post('/api/iot-control', (req, res) => {
     const { feedName, value } = req.body;
     
@@ -25,9 +27,8 @@ app.post('/api/iot-control', (req, res) => {
         return res.status(400).json({ error: 'Body cần phải truyền feedName và value' });
     }
 
-    const topic = `${AIO_USERNAME}/feeds/${feedName}`;
+    const topic = `${config.aio_username}/feeds/${feedName}`;
     
-    // Gửi lệnh lên Adafruit (thiết bị đã subscribe sẽ tự động kích hoạt)
     client.publish(topic, String(value), {}, (err) => {
         if (err) {
             console.error(`❌ Lỗi khi gửi lệnh tới ${topic}`, err);
@@ -38,7 +39,6 @@ app.post('/api/iot-control', (req, res) => {
     });
 });
 
-// Lắng nghe server
 app.listen(port, () => {
     console.log(`\n🚀 Server Express đang chạy tại http://localhost:${port}`);
     console.log(`👉 API xem dữ liệu: GET http://localhost:${port}/api/iot-data`);
