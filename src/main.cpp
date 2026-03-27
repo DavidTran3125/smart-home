@@ -73,6 +73,7 @@ void loop(){
         if (controll_servo.lastread[0] == 'A') glob_servo_angle = 90;
         Serial.print("Góc servo mới: ");
         Serial.println(glob_servo_angle);
+        Servo_Task(glob_servo_angle);
     }
   }
 }
