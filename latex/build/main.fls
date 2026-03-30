@@ -315,6 +315,10 @@ INPUT ./hcmut.png
 INPUT ./hcmut.png
 INPUT ./hcmut.png
 INPUT ./hcmut.png
+INPUT ./hcmut.png
+INPUT ./hcmut.png
+INPUT ./hcmut.png
+INPUT ./hcmut.png
 INPUT build/main.aux
 INPUT build/main.out
 INPUT build/main.out

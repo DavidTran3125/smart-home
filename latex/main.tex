@@ -935,6 +935,25 @@ Tại bước 6: Lỗi khi lưu dữ liệu → hệ thống giữ nguyên dữ 
 \end{itemize}
 Từ những yêu cầu trên, nhóm đề xuất sử dụng kiến trúc MVC (Model-View-Controller) kết hợp Hướng sự kiện (Event-Driven) trên nền tảng MERN stack. Đây là giải pháp tối ưu giúp hệ thống vận hành hiệu quả, đảm bảo tính bền vững, bảo mật và khả năng mở rộng linh hoạt trong tương lai.
 
+\subsection{Phân tích lý do lựa chọn MERN stack}
+Việc lựa chọn MERN (MongoDB, Express.js, React.js, Node.js) không chỉ dựa trên mức độ phổ biến mà còn xuất phát từ sự phù hợp trực tiếp với đặc thù hệ thống Smart Home thời gian thực:
+
+\begin{itemize}[leftmargin=*]
+	\item \textbf{Đồng nhất ngôn ngữ toàn hệ thống:} Cả frontend và backend đều sử dụng JavaScript/TypeScript, giúp giảm chi phí chuyển ngữ giữa các tầng, tăng tốc phát triển và thuận lợi cho bảo trì đội nhóm nhỏ.
+
+	\item \textbf{Phù hợp với dữ liệu IoT biến động cao:} MongoDB lưu trữ dữ liệu dạng document linh hoạt, phù hợp với dữ liệu cảm biến có cấu trúc thay đổi theo từng loại thiết bị. Khi bổ sung cảm biến mới, hệ thống không cần tái thiết kế lược đồ cứng như nhiều mô hình quan hệ truyền thống.
+
+	\item \textbf{Tương thích tự nhiên với kiến trúc Event-Driven:} Node.js có mô hình non-blocking I/O và event loop, phù hợp để xử lý nhiều luồng sự kiện đồng thời (MQTT message, WebSocket update, cảnh báo khẩn cấp) với độ trễ thấp.
+
+	\item \textbf{Trải nghiệm thời gian thực tốt ở tầng giao diện:} React hỗ trợ cập nhật trạng thái theo component, kết hợp WebSockets giúp dashboard phản hồi tức thời khi có thay đổi từ cảm biến hoặc thao tác điều khiển thiết bị.
+
+	\item \textbf{Dễ tích hợp hệ sinh thái middleware và bảo mật:} Express.js cho phép tổ chức API theo module MVC rõ ràng, tích hợp thuận tiện các cơ chế bảo mật như JWT, CORS, rate limiting, validation và logging tập trung.
+
+	\item \textbf{Khả năng mở rộng và triển khai linh hoạt:} MERN hỗ trợ triển khai theo hướng tách dịch vụ, dễ mở rộng ngang ở backend, đồng thời phù hợp với hạ tầng cloud phổ biến (Docker, VPS, PaaS), giúp tối ưu chi phí vận hành cho đồ án và giai đoạn phát triển sản phẩm sau này.
+\end{itemize}
+
+Tóm lại, MERN tạo ra sự cân bằng giữa tốc độ phát triển, hiệu năng thời gian thực và khả năng mở rộng dài hạn, đáp ứng đúng các yêu cầu kỹ thuật và nghiệp vụ của bài toán Smart Home.
+
 
 \subsection{Chi tiết các thành phần trong kiến trúc MVC}
 Việc áp dụng mô hình MVC giúp phân tách rõ ràng giữa dữ liệu, giao diện và logic điều khiển, tạo điều kiện thuận lợi cho việc phát triển song song và bảo trì hệ thống.
@@ -1027,5 +1046,8 @@ Việc lựa chọn kiến trúc Hybrid (MVC + Event-Driven) kết hợp cùng b
 
 \section{Thiết kế Database}
 \subsection{}
+
+
+
 
 \end{document}
