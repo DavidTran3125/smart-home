@@ -1,5 +1,7 @@
-import config from './index.js';
 import mqtt from 'mqtt';
+
+import config from './index.js';
+import sendMail from '../utils/mail.js';
 
 const MQTT_URL = `mqtts://${config.aio_username}:${config.aio_key}@io.adafruit.com`;
 const client = mqtt.connect(MQTT_URL);
@@ -11,6 +13,7 @@ client.on('connect', () => {
 
 
     const feedsToListen = ['fan', 'humid', 'ledred', 'ledrgb', 'light', 'servo', 'temp']
+    // const feedsToListen = ['BBC_temp', '']
 
     feedsToListen.forEach((feed) => {
         client.subscribe(`${config.aio_username}/feeds/${feed}`, (err) => {
@@ -24,7 +27,7 @@ client.on('connect', () => {
 });
 
 // Event nhận dữ liệu mỗi khi thiết bị gửi (push) lên IO
-client.on('message', (topic, message) => {
+client.on('message', async (topic, message) => {
     const feedName = topic.split('/').pop();
     const value = message.toString();
     console.log(`📩 Nhận được: [${feedName}] = ${value}`);
@@ -34,6 +37,12 @@ client.on('message', (topic, message) => {
         value: value,
         updatedAt: new Date().toISOString()
     };
+    if (feedName === 'temp') {
+        const numericValue = Number(value);
+        if (!Number.isNaN(numericValue) && numericValue > 28) {
+            await sendMail({ value: numericValue });
+        }
+    }
 });
 client.on('error', (err) => {
     console.error('❌ MQTT Error:', err);

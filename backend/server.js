@@ -38,7 +38,7 @@ app.post("/api/iot-control", (req, res) => {
       return res.status(500).json({ error: "Không thể gửi lệnh cho thiết bị" });
     }
     console.log(
-      `📤 Đã gửi lệnh - Feed: [${feedName}], Giá trị lệnh: [${value}]`,
+      ` Đã gửi lệnh - Feed: [${feedName}], Giá trị lệnh: [${value}]`,
     );
     res.json({
       success: true,
@@ -48,7 +48,7 @@ app.post("/api/iot-control", (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log(`\n🚀 Server Express đang chạy tại http://localhost:${port}`);
+  console.log(`\n Server Express đang chạy tại http://localhost:${port}`);
   console.log(`👉 API xem dữ liệu: GET http://localhost:${port}/api/iot-data`);
   console.log(
     `👉 API điều khiển: Lệnh POST tới http://localhost:${port}/api/iot-control\n`,
