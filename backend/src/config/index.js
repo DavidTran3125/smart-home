@@ -8,4 +8,5 @@ export default {
   mongo_uri: process.env.MONGO_URI,
   gmail: process.env.GMAIL,
   gmail_app_pass: process.env.GMAIL_APP_PASS,
+  jwt_secret: process.env.JWT_SECRET,
 };

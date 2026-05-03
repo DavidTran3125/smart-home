@@ -3,6 +3,10 @@ import express from "express";
 import mqttConfig from "./src/config/mqtt.js";
 import config from "./src/config/index.js";
 import connectDB from "./src/db/connect.js";
+
+import authRoutes from "./src/routes/AuthRoutes.js";
+import userRoutes from "./src/routes/UserRoutes.js";
+
 // dotenv.config();
 connectDB();
 
@@ -12,6 +16,9 @@ const app = express();
 const port = 3000;
 
 app.use(express.json());
+
+app.use("/api/v1/auth", authRoutes);
+app.use("/api/v1/users", userRoutes);
 
 app.get("/api/iot-data", (req, res) => {
   res.json({
@@ -37,9 +44,7 @@ app.post("/api/iot-control", (req, res) => {
       console.error(`❌ Lỗi khi gửi lệnh tới ${topic}`, err);
       return res.status(500).json({ error: "Không thể gửi lệnh cho thiết bị" });
     }
-    console.log(
-      ` Đã gửi lệnh - Feed: [${feedName}], Giá trị lệnh: [${value}]`,
-    );
+    console.log(` Đã gửi lệnh - Feed: [${feedName}], Giá trị lệnh: [${value}]`);
     res.json({
       success: true,
       message: `Đã gửi lệnh ${value} tới điều khiển ${feedName}`,
