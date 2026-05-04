@@ -37,7 +37,7 @@ async function sendMail(body) {
   // Nội dung mail
   let info = await transporter.sendMail({
     from: '"Minh Dev" phanminhkaneki@gmail.com>',
-    to: "hieu.tran3125@hcmut.edu.vn",
+    to: "minh.phan2312105@hcmut.edu.vn",
     subject: "[WARNINGS] Notifications from smart home",
     html: `${html}`
   });

@@ -4,6 +4,7 @@ const deviceSchema = new mongoose.Schema({
   name: { type: String, required: true },
   type: { type: String },
   model: { type: String },
+  feed_name: { type: String, unique: true, sparse: true }, // Mapping tới MQTT feed (vd: 'temp', 'fan')
   pin: { type: Number },
   pin_mode: { type: String },
   status: { type: String, enum: ["Bật", "Tắt"], default: "Tắt" },

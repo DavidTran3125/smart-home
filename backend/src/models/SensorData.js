@@ -12,4 +12,9 @@ const sensorDataSchema = new mongoose.Schema({
   unit: { type: String },
 });
 
+// Index tối ưu hóa truy vấn lịch sử (sort desc theo timestamp)
+sensorDataSchema.index({ timestamp: -1 });
+// Index compound cho truy vấn theo thiết bị + thời gian
+sensorDataSchema.index({ device_id: 1, timestamp: -1 });
+
 export default mongoose.model("SensorData", sensorDataSchema);

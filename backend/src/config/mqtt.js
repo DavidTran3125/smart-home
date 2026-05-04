@@ -1,51 +1,84 @@
-import mqtt from 'mqtt';
+/**
+ * MQTT Configuration & Pipeline
+ *
+ * Sử dụng 3 Design Patterns:
+ *   1. Singleton  — MQTTClient (1 kết nối duy nhất)
+ *   2. Observer   — SensorEventBus phát sự kiện, 3 Observers lắng nghe
+ *   3. Factory    — DeviceFactory (được dùng bởi observers để parse data)
+ *
+ * Pipeline khi nhận dữ liệu MQTT:
+ *   MQTT message → SensorEventBus.publishSensorData()
+ *     → [Observer] LatestDataCache  : cập nhật RAM
+ *     → [Observer] DatabaseLogger   : ghi SensorData vào MongoDB
+ *     → [Observer] AlertSystem      : kiểm tra ngưỡng → tạo Alert + gửi email
+ */
 
-import config from './index.js';
-import sendMail from '../utils/mail.js';
+import MQTTClient from "../services/MQTTClient.js";
+import SensorEventBus from "../services/SensorEventBus.js";
+import DatabaseLogger from "../services/observers/DatabaseLogger.js";
+import AlertSystem from "../services/observers/AlertSystem.js";
+import LatestDataCache from "../services/observers/LatestDataCache.js";
 
-const MQTT_URL = `mqtts://${config.aio_username}:${config.aio_key}@io.adafruit.com`;
-const client = mqtt.connect(MQTT_URL);
+// ========================
+// 1. Khởi tạo Singleton MQTT Client
+// ========================
+const mqttClient = MQTTClient.getInstance();
+const client = mqttClient.getClient();
 
-let latestData = {};
+// ========================
+// 2. Khởi tạo Observer Pattern
+// ========================
+const eventBus = SensorEventBus.getInstance();
 
-client.on('connect', () => {
-    console.log('✅ Đã kết nối thành công tới Adafruit MQTT broker');
+// Tạo và đăng ký các Observers
+const latestDataCache = new LatestDataCache();
+const databaseLogger = new DatabaseLogger();
+const alertSystem = new AlertSystem();
 
+latestDataCache.init(); // Observer 1: Cập nhật cache RAM
+databaseLogger.init();  // Observer 2: Ghi vào MongoDB
+alertSystem.init();     // Observer 3: Kiểm tra ngưỡng + gửi email
 
-    const feedsToListen = ['fan', 'humid', 'ledred', 'ledrgb', 'light', 'servo', 'temp']
-    // const feedsToListen = ['BBC_temp', '']
+// ========================
+// 3. MQTT Event Handlers
+// ========================
+client.on("connect", () => {
+  console.log("✅ Đã kết nối thành công tới Adafruit MQTT broker");
 
-    feedsToListen.forEach((feed) => {
-        client.subscribe(`${config.aio_username}/feeds/${feed}`, (err) => {
-            if (err) {
-                console.error(`❌ Lỗi khi đăng ký feed ${feed}`, err);
-            } else {
-                console.log(`📡 Đang lắng nghe luồng dữ liệu của: ${feed}`);
-            }
-        });
-    });
+  // Danh sách feeds cần lắng nghe
+  const feedsToListen = [
+    "fan",
+    "humid",
+    "ledred",
+    "ledrgb",
+    "light",
+    "servo",
+    "temp",
+  ];
+
+  feedsToListen.forEach((feed) => {
+    mqttClient.subscribeFeed(feed);
+  });
 });
 
-// Event nhận dữ liệu mỗi khi thiết bị gửi (push) lên IO
-client.on('message', async (topic, message) => {
-    const feedName = topic.split('/').pop();
-    const value = message.toString();
-    console.log(`📩 Nhận được: [${feedName}] = ${value}`);
-    
-    // Cập nhật dữ liệu vào biến mới nhất
-    latestData[feedName] = {
-        value: value,
-        updatedAt: new Date().toISOString()
-    };
-    if (feedName === 'temp') {
-        const numericValue = Number(value);
-        if (!Number.isNaN(numericValue) && numericValue > 28) {
-            await sendMail({ value: numericValue });
-        }
-    }
-});
-client.on('error', (err) => {
-    console.error('❌ MQTT Error:', err);
+// Khi nhận message → phát sự kiện qua EventBus → tất cả Observers xử lý đồng thời
+client.on("message", (topic, message) => {
+  const feedName = topic.split("/").pop();
+  const value = message.toString();
+  console.log(`📥 Nhận được: [${feedName}] = ${value}`);
+
+  // Phát sự kiện tới tất cả Observers (Observer Pattern)
+  eventBus.publishSensorData({
+    feedName,
+    value,
+    timestamp: new Date(),
+  });
 });
 
-export default { client, latestData };
+client.on("error", (err) => {
+  console.error("❌ MQTT Error:", err.message);
+});
+
+// Export latestDataCache để server.js có thể dùng cho API /api/iot-data
+export { latestDataCache };
+export default { client: mqttClient, latestDataCache };
