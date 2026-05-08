@@ -7,6 +7,8 @@ import Device from "../models/Device.js";
 import ActivityLog from "../models/ActivityLog.js";
 import MQTTClient from "../services/MQTTClient.js";
 import DeviceFactory from "../services/DeviceFactory.js";
+import Home from "../models/Home.js";
+import { getUserDeviceIds } from "../middlewares/AccessControlMiddleware.js";
 
 /**
  * GET /api/v1/devices
@@ -14,7 +16,8 @@ import DeviceFactory from "../services/DeviceFactory.js";
  */
 export const getAllDevices = async (req, res) => {
   try {
-    const devices = await Device.find().sort({ name: 1 });
+    const userDeviceIds = await getUserDeviceIds(req.user.id);
+    const devices = await Device.find({ _id: { $in: userDeviceIds } }).sort({ name: 1 });
     res.json({
       success: true,
       count: devices.length,
@@ -31,13 +34,8 @@ export const getAllDevices = async (req, res) => {
  */
 export const getDeviceById = async (req, res) => {
   try {
-    const device = await Device.findById(req.params.id);
-    if (!device) {
-      return res
-        .status(404)
-        .json({ success: false, error: "Không tìm thấy thiết bị" });
-    }
-    res.json({ success: true, data: device });
+    // req.device đã được gắn bởi verifyDeviceAccess middleware
+    res.json({ success: true, data: req.device });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
@@ -48,37 +46,51 @@ export const getDeviceById = async (req, res) => {
  * Thêm thiết bị mới (Admin).
  */
 export const createDevice = async (req, res) => {
+  let createdDevice = null;
   try {
     const { name, type, model, pin, pin_mode, feed_name,
-            threshold_min_value, threshold_max_value, threshold_is_active } = req.body;
+            threshold_min_value, threshold_max_value, threshold_is_active, homeId } = req.body;
 
-    if (!name) {
+    if (!name || !homeId) {
       return res
         .status(400)
-        .json({ success: false, error: "Tên thiết bị (name) là bắt buộc" });
+        .json({ success: false, error: "Tên thiết bị (name) và nhà (homeId) là bắt buộc" });
     }
 
-    const device = await Device.create({
+    // Kiểm tra Home và quyền Admin
+    const home = await Home.findOne({ _id: homeId, admin: req.user.id });
+    if (!home) {
+      return res.status(403).json({ success: false, error: "Bạn không có quyền thêm thiết bị vào nhà này" });
+    }
+
+    createdDevice = await Device.create({
       name,
       type,
       model,
       pin,
       pin_mode,
       feed_name,
+      homeId,
       threshold_min_value,
       threshold_max_value,
       threshold_is_active,
     });
 
-    // Ghi Activity Log
-    await ActivityLog.create({
-      user_id: req.user.id,
-      device_id: device._id,
-      action: "Thêm thiết bị",
-      description: `Đã thêm thiết bị mới: ${device.name} (feed: ${device.feed_name || "N/A"})`,
-    });
+    try {
+      // Ghi Activity Log
+      await ActivityLog.create({
+        user_id: req.user.id,
+        device_id: createdDevice._id,
+        action: "Thêm thiết bị",
+        description: `Đã thêm thiết bị mới: ${createdDevice.name} (feed: ${createdDevice.feed_name || "N/A"})`,
+      });
+    } catch (logError) {
+      // MANUAL ROLLBACK
+      await Device.findByIdAndDelete(createdDevice._id);
+      throw new Error("Lỗi khi ghi Log hệ thống. Đã rollback thao tác tạo thiết bị.");
+    }
 
-    res.status(201).json({ success: true, data: device });
+    res.status(201).json({ success: true, data: createdDevice });
   } catch (error) {
     if (error.code === 11000) {
       return res
@@ -99,11 +111,7 @@ export const updateDevice = async (req, res) => {
       new: true,
       runValidators: true,
     });
-    if (!device) {
-      return res
-        .status(404)
-        .json({ success: false, error: "Không tìm thấy thiết bị" });
-    }
+    // Lỗi Not Found đã được handle một phần ở middleware nhưng lỡ middleware chạy trước ghi đè thì vẫn cần return
     res.json({ success: true, data: device });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
@@ -115,6 +123,7 @@ export const updateDevice = async (req, res) => {
  * Điều khiển thiết bị Bật/Tắt → cập nhật DB + publish MQTT + ghi ActivityLog.
  */
 export const controlDevice = async (req, res) => {
+  let oldStatus = null;
   try {
     const { value } = req.body;
     if (value === undefined) {
@@ -123,12 +132,7 @@ export const controlDevice = async (req, res) => {
         .json({ success: false, error: "Thiếu giá trị điều khiển (value)" });
     }
 
-    const device = await Device.findById(req.params.id);
-    if (!device) {
-      return res
-        .status(404)
-        .json({ success: false, error: "Không tìm thấy thiết bị" });
-    }
+    const device = req.device; // Lấy từ middleware
 
     if (!device.feed_name) {
       return res
@@ -144,19 +148,28 @@ export const controlDevice = async (req, res) => {
     const mqttClient = MQTTClient.getInstance();
     await mqttClient.publishToFeed(device.feed_name, command);
 
-    // Cập nhật trạng thái trong DB
+    oldStatus = device.status;
     const newStatus = Number(value) === 0 ? "Tắt" : "Bật";
+    
+    // BƯỚC 1: Cập nhật trạng thái trong DB
     device.status = newStatus;
     device.last_seen = new Date();
     await device.save();
 
-    // Ghi Activity Log
-    await ActivityLog.create({
-      user_id: req.user.id,
-      device_id: device._id,
-      action: "Điều khiển thiết bị",
-      description: `${device.name}: gửi lệnh ${command} → trạng thái ${newStatus}`,
-    });
+    try {
+      // BƯỚC 2: Ghi Activity Log
+      await ActivityLog.create({
+        user_id: req.user.id,
+        device_id: device._id,
+        action: "Điều khiển thiết bị",
+        description: `Gửi lệnh ${command} tới ${device.name} → trạng thái ${newStatus}`,
+      });
+    } catch (logError) {
+      // MANUAL ROLLBACK
+      device.status = oldStatus;
+      await device.save();
+      throw new Error("Lỗi hệ thống khi ghi Log. Đã rollback thao tác điều khiển.");
+    }
 
     res.json({
       success: true,
@@ -179,20 +192,21 @@ export const controlDevice = async (req, res) => {
  */
 export const deleteDevice = async (req, res) => {
   try {
-    const device = await Device.findByIdAndDelete(req.params.id);
-    if (!device) {
-      return res
-        .status(404)
-        .json({ success: false, error: "Không tìm thấy thiết bị" });
+    const device = req.device;
+
+    // Manual Rollback cho Delete (Ghi Log trước, Xóa sau để tránh mất dữ liệu device nếu ghi log thất bại)
+    try {
+      await ActivityLog.create({
+        user_id: req.user.id,
+        device_id: device._id,
+        action: "Xóa thiết bị",
+        description: `Đã xóa thiết bị: ${device.name} (feed: ${device.feed_name || "N/A"})`,
+      });
+    } catch (logError) {
+      throw new Error("Lỗi khi ghi Log. Không thể xóa thiết bị.");
     }
 
-    // Ghi Activity Log
-    await ActivityLog.create({
-      user_id: req.user.id,
-      device_id: device._id,
-      action: "Xóa thiết bị",
-      description: `Đã xóa thiết bị: ${device.name} (feed: ${device.feed_name || "N/A"})`,
-    });
+    await Device.findByIdAndDelete(device._id);
 
     res.json({ success: true, message: "Đã xóa thiết bị thành công", data: {} });
   } catch (error) {

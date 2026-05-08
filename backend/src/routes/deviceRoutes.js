@@ -6,6 +6,7 @@
 import { Router } from "express";
 import { authMiddleware } from "../middlewares/AuthMiddleware.js";
 import { isAdmin } from "../middlewares/RoleMiddleware.js";
+import { verifyDeviceAccess } from "../middlewares/AccessControlMiddleware.js";
 import {
   getAllDevices,
   getDeviceById,
@@ -21,19 +22,19 @@ const router = Router();
 router.get("/", authMiddleware, getAllDevices);
 
 // GET    /api/v1/devices/:id      — Lấy chi tiết 1 thiết bị
-router.get("/:id", authMiddleware, getDeviceById);
+router.get("/:id", authMiddleware, verifyDeviceAccess, getDeviceById);
 
 // POST   /api/v1/devices          — Thêm thiết bị mới (Admin)
 router.post("/", authMiddleware, isAdmin, createDevice);
 
 // PUT    /api/v1/devices/:id      — Cập nhật cấu hình thiết bị (Admin)
-router.put("/:id", authMiddleware, isAdmin, updateDevice);
+router.put("/:id", authMiddleware, isAdmin, verifyDeviceAccess, updateDevice);
 
 // POST   /api/v1/devices/:id/control — Điều khiển thiết bị (Bật/Tắt)
-router.post("/:id/control", authMiddleware, controlDevice);
+router.post("/:id/control", authMiddleware, verifyDeviceAccess, controlDevice);
 
 // DELETE /api/v1/devices/:id      — Xóa thiết bị khỏi hệ thống (Admin)
-router.delete("/:id", authMiddleware, isAdmin, deleteDevice);
+router.delete("/:id", authMiddleware, isAdmin, verifyDeviceAccess, deleteDevice);
 
 
 

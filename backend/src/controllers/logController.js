@@ -4,52 +4,42 @@
  */
 
 import ActivityLog from "../models/ActivityLog.js";
+import { getUserDeviceIds } from "../middlewares/AccessControlMiddleware.js";
 
 /**
  * GET /api/v1/logs
- * Lấy danh sách Activity Logs (Admin only).
- *
- * Query params:
- *   - action    : Lọc theo loại hành động (optional)
- *   - user_id   : Lọc theo người thực hiện (optional)
- *   - device_id : Lọc theo thiết bị (optional)
- *   - from      : Thời gian bắt đầu ISO string (optional)
- *   - to        : Thời gian kết thúc ISO string (optional)
- *   - page      : Trang hiện tại (default: 1)
- *   - limit     : Số bản ghi mỗi trang (default: 20, max: 100)
+ * Lấy danh sách Activity Logs thuộc các thiết bị trong nhà của user.
  */
 export const getLogs = async (req, res) => {
   try {
-    const {
-      action,
-      user_id,
-      device_id,
-      from,
-      to,
-      page = 1,
-      limit = 20,
-    } = req.query;
+    const { action, user_id, device_id, from, to, page = 1, limit = 20 } = req.query;
 
-    // Xây dựng bộ lọc
-    const filter = {};
+    const userDeviceIds = await getUserDeviceIds(req.user.id);
+
+    // Bắt buộc filter theo thiết bị thuộc Home của User
+    const filter = { device_id: { $in: userDeviceIds } };
 
     if (action) filter.action = action;
     if (user_id) filter.user_id = user_id;
-    if (device_id) filter.device_id = device_id;
+    if (device_id) {
+      // Đảm bảo device_id truyền lên phải nằm trong list thiết bị được phép
+      if (userDeviceIds.some((id) => id.equals(device_id) || id.toString() === device_id)) {
+        filter.device_id = device_id;
+      } else {
+        return res.status(403).json({ success: false, error: "Không có quyền truy cập log của thiết bị này" });
+      }
+    }
 
-    // Lọc theo khoảng thời gian
     if (from || to) {
       filter.timestamp = {};
       if (from) filter.timestamp.$gte = new Date(from);
       if (to) filter.timestamp.$lte = new Date(to);
     }
 
-    // Phân trang
     const pageNum = Math.max(1, parseInt(page));
     const limitNum = Math.min(100, Math.max(1, parseInt(limit)));
     const skip = (pageNum - 1) * limitNum;
 
-    // Query với populate user_id và device_id
     const [data, total] = await Promise.all([
       ActivityLog.find(filter)
         .sort({ timestamp: -1 })
@@ -68,6 +58,35 @@ export const getLogs = async (req, res) => {
       page: pageNum,
       totalPages: Math.ceil(total / limitNum),
       data: data,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+/**
+ * PUT /api/v1/logs/mark-read
+ * Đánh dấu log là đã xem.
+ */
+export const markLogsAsRead = async (req, res) => {
+  try {
+    const userDeviceIds = await getUserDeviceIds(req.user.id);
+    const { logIds } = req.body;
+
+    const filter = {
+      device_id: { $in: userDeviceIds },
+      is_read: false,
+    };
+
+    if (logIds && logIds.length > 0) {
+      filter._id = { $in: logIds };
+    }
+
+    const result = await ActivityLog.updateMany(filter, { $set: { is_read: true } });
+
+    res.json({
+      success: true,
+      message: `Đã đánh dấu ${result.modifiedCount} log là đã đọc`,
     });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });

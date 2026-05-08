@@ -6,6 +6,7 @@
 import Alert from "../models/Alert.js";
 import Device from "../models/Device.js";
 import ActivityLog from "../models/ActivityLog.js";
+import { getUserDeviceIds } from "../middlewares/AccessControlMiddleware.js";
 
 /**
  * GET /api/v1/alerts/active
@@ -13,7 +14,11 @@ import ActivityLog from "../models/ActivityLog.js";
  */
 export const getActiveAlerts = async (req, res) => {
   try {
-    const alerts = await Alert.find({ status: "Chưa xử lý" })
+    const userDeviceIds = await getUserDeviceIds(req.user.id);
+    const alerts = await Alert.find({ 
+      status: "Chưa xử lý",
+      device_id: { $in: userDeviceIds }
+    })
       .sort({ detected_at: -1 })
       .populate("device_id", "name feed_name type")
       .lean();
@@ -36,7 +41,9 @@ export const getAllAlerts = async (req, res) => {
   try {
     const { status, page = 1, limit = 20 } = req.query;
 
-    const filter = {};
+    const userDeviceIds = await getUserDeviceIds(req.user.id);
+    const filter = { device_id: { $in: userDeviceIds } };
+
     if (status) filter.status = status;
 
     const pageNum = Math.max(1, parseInt(page));
@@ -71,6 +78,8 @@ export const getAllAlerts = async (req, res) => {
  * Đánh dấu cảnh báo đã xử lý (Admin).
  */
 export const resolveAlert = async (req, res) => {
+  let oldStatus = null;
+  let oldResolvedAt = null;
   try {
     const alert = await Alert.findById(req.params.id);
     if (!alert) {
@@ -79,23 +88,39 @@ export const resolveAlert = async (req, res) => {
         .json({ success: false, error: "Không tìm thấy cảnh báo" });
     }
 
+    const userDeviceIds = await getUserDeviceIds(req.user.id);
+    if (!userDeviceIds.some(id => id.equals(alert.device_id) || id.toString() === alert.device_id.toString())) {
+      return res.status(403).json({ success: false, error: "Bạn không có quyền truy cập cảnh báo này" });
+    }
+
     if (alert.status === "Đã xử lý") {
       return res
         .status(400)
         .json({ success: false, error: "Cảnh báo này đã được xử lý rồi" });
     }
 
+    oldStatus = alert.status;
+    oldResolvedAt = alert.resolved_at;
+
     alert.status = "Đã xử lý";
     alert.resolved_at = new Date();
     await alert.save();
 
-    // Ghi Activity Log
-    await ActivityLog.create({
-      user_id: req.user.id,
-      device_id: alert.device_id,
-      action: "Xử lý cảnh báo",
-      description: `Đã xử lý cảnh báo: ${alert.message}`,
-    });
+    try {
+      // Ghi Activity Log
+      await ActivityLog.create({
+        user_id: req.user.id,
+        device_id: alert.device_id,
+        action: "Xử lý cảnh báo",
+        description: `Đã xử lý cảnh báo: ${alert.message}`,
+      });
+    } catch (logError) {
+      // MANUAL ROLLBACK
+      alert.status = oldStatus;
+      alert.resolved_at = oldResolvedAt;
+      await alert.save();
+      throw new Error("Lỗi hệ thống khi ghi Log. Đã rollback thao tác xử lý Alert.");
+    }
 
     res.json({
       success: true,
@@ -113,8 +138,9 @@ export const resolveAlert = async (req, res) => {
  */
 export const getThresholds = async (req, res) => {
   try {
+    const userDeviceIds = await getUserDeviceIds(req.user.id);
     const devices = await Device.find(
-      {},
+      { _id: { $in: userDeviceIds } },
       "name feed_name type threshold_min_value threshold_max_value threshold_is_active"
     )
       .sort({ name: 1 })
@@ -139,12 +165,12 @@ export const updateThreshold = async (req, res) => {
     const { threshold_min_value, threshold_max_value, threshold_is_active } =
       req.body;
 
-    const device = await Device.findById(req.params.deviceId);
-    if (!device) {
-      return res
-        .status(404)
-        .json({ success: false, error: "Không tìm thấy thiết bị" });
-    }
+    // Lấy device từ verifyDeviceAccess middleware
+    const device = req.device;
+
+    const oldMin = device.threshold_min_value;
+    const oldMax = device.threshold_max_value;
+    const oldActive = device.threshold_is_active;
 
     // Cập nhật các field threshold
     if (threshold_min_value !== undefined)
@@ -156,13 +182,22 @@ export const updateThreshold = async (req, res) => {
 
     await device.save();
 
-    // Ghi Activity Log
-    await ActivityLog.create({
-      user_id: req.user.id,
-      device_id: device._id,
-      action: "Cập nhật ngưỡng",
-      description: `${device.name}: min=${device.threshold_min_value}, max=${device.threshold_max_value}, active=${device.threshold_is_active}`,
-    });
+    try {
+      // Ghi Activity Log
+      await ActivityLog.create({
+        user_id: req.user.id,
+        device_id: device._id,
+        action: "Cập nhật ngưỡng",
+        description: `${device.name}: min=${device.threshold_min_value}, max=${device.threshold_max_value}, active=${device.threshold_is_active}`,
+      });
+    } catch (logError) {
+      // MANUAL ROLLBACK
+      device.threshold_min_value = oldMin;
+      device.threshold_max_value = oldMax;
+      device.threshold_is_active = oldActive;
+      await device.save();
+      throw new Error("Lỗi khi ghi Log. Đã rollback thao tác cập nhật ngưỡng.");
+    }
 
     res.json({
       success: true,
