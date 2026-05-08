@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IoT Control Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #080c10;
+      --surface: #0d1319;
+      --border: #1a2535;
+      --accent: #00ff88;
+      --accent2: #00c4ff;
+      --accent3: #ff4d6d;
+      --warn: #ffd166;
+      --text: #e8f0fe;
+      --muted: #4a6080;
+      --card-bg: #0f1923;
+      --glow: 0 0 20px rgba(0,255,136,0.15);
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Syne', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(0,255,136,0.06), transparent),
+                  radial-gradient(ellipse 60% 40% at 90% 80%, rgba(0,196,255,0.05), transparent);
+      pointer-events: none; z-index: 0;
+    }
+
+    /* ── HEADER ── */
+    header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 32px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(13,19,25,0.85);
+      backdrop-filter: blur(12px);
+      position: sticky; top: 0; z-index: 100;
+    }
+    .logo { display: flex; align-items: center; gap: 12px; }
+    .logo-dot { width:10px; height:10px; border-radius:50%; background:var(--accent); box-shadow: 0 0 12px var(--accent); animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1; transform:scale(1);} 50%{opacity:.6; transform:scale(1.3);} }
+    .logo-text { font-size:1.15rem; font-weight:800; letter-spacing:2px; text-transform:uppercase; color:var(--text); }
+    .logo-sub { font-family:'Space Mono',monospace; font-size:.6rem; color:var(--muted); letter-spacing:3px; margin-top:1px; }
+
+    /* Config bar */
+    .config-bar {
+      display: flex; align-items: center; gap: 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px; padding: 8px 14px;
+    }
+    .config-bar input {
+      background: transparent; border: none; outline: none;
+      color: var(--text); font-family:'Space Mono',monospace; font-size:.75rem;
+      width: 160px;
+    }
+    .config-bar input::placeholder { color: var(--muted); }
+    .config-bar .sep { color: var(--border); }
+    .btn-connect {
+      background: var(--accent); color: #000; border: none; border-radius:6px;
+      padding: 6px 14px; font-family:'Syne',sans-serif; font-weight:700; font-size:.75rem;
+      cursor: pointer; letter-spacing:1px; text-transform:uppercase; transition:.2s;
+    }
+    .btn-connect:hover { background:#00cc6a; }
+    .btn-connect:disabled { background: var(--muted); color: var(--bg); cursor:not-allowed; }
+
+    /* Status */
+    .status-badge {
+      display: flex; align-items: center; gap: 6px;
+      font-family:'Space Mono',monospace; font-size:.7rem; color: var(--muted);
+    }
+    .status-dot { width:7px; height:7px; border-radius:50%; background:var(--muted); transition:.4s; }
+    .status-dot.online { background:var(--accent); box-shadow:0 0 8px var(--accent); }
+    .status-dot.error { background:var(--accent3); box-shadow:0 0 8px var(--accent3); }
+
+    /* ── MAIN GRID ── */
+    main {
+      position: relative; z-index: 1;
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      grid-template-rows: auto;
+      gap: 16px;
+      padding: 24px 32px;
+      max-width: 1600px; margin: 0 auto;
+    }
+
+    /* ── CARD BASE ── */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px 22px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color .3s, box-shadow .3s;
+    }
+    .card:hover { border-color: rgba(0,255,136,.25); box-shadow: var(--glow); }
+    .card::after {
+      content:''; position:absolute; inset:0;
+      background: linear-gradient(135deg, rgba(255,255,255,.02) 0%, transparent 60%);
+      pointer-events:none;
+    }
+    .card-label {
+      font-family:'Space Mono',monospace; font-size:.65rem;
+      color: var(--muted); text-transform:uppercase; letter-spacing:2px;
+      margin-bottom: 14px; display:flex; align-items:center; gap:6px;
+    }
+    .card-label .dot { width:5px; height:5px; border-radius:50%; background:var(--accent2); }
+
+    /* Grid placement */
+    .card-temp   { grid-column: span 3; grid-row: span 2; }
+    .card-ledrgb { grid-column: span 3; }
+    .card-servo  { grid-column: span 3; }
+    .card-humid  { grid-column: span 3; }
+    .card-fan    { grid-column: span 3; }
+    .card-light  { grid-column: span 6; }
+    .card-rgb    { grid-column: span 6; }
+
+    /* ── TEMP GAUGE ── */
+    .gauge-wrap { display:flex; flex-direction:column; align-items:center; justify-content:center; height:calc(100% - 28px); gap:10px; }
+    .gauge-svg { width:180px; height:180px; }
+    .gauge-val { font-size:2.8rem; font-weight:800; color:var(--accent); text-align:center; line-height:1; }
+    .gauge-unit { font-family:'Space Mono',monospace; font-size:.75rem; color:var(--muted); }
+    .gauge-range { display:flex; justify-content:space-between; width:100%; font-family:'Space Mono',monospace; font-size:.6rem; color:var(--muted); }
+
+    /* ── TOGGLE ── */
+    .toggle-wrap { display:flex; align-items:center; justify-content:space-between; margin-top:4px; }
+    .toggle-label-val { font-family:'Space Mono',monospace; font-size:1.4rem; font-weight:700; }
+    .toggle-label-val.on { color: var(--accent3); }
+    .toggle-label-val.off { color: var(--muted); }
+    .toggle { position:relative; width:64px; height:34px; cursor:pointer; }
+    .toggle input { opacity:0; width:0; height:0; }
+    .slider {
+      position:absolute; inset:0; border-radius:34px;
+      background:var(--border); transition:.3s;
+      border:1px solid var(--muted);
+    }
+    .slider:before {
+      content:''; position:absolute;
+      width:26px; height:26px; border-radius:50%;
+      left:3px; top:3px;
+      background:var(--muted); transition:.3s;
+    }
+    input:checked + .slider { background:rgba(255,77,109,.25); border-color:var(--accent3); }
+    input:checked + .slider:before { transform:translateX(30px); background:var(--accent3); box-shadow:0 0 10px var(--accent3); }
+
+    /* ── SERVO ── */
+    .servo-display { text-align:center; padding: 10px 0; }
+    .servo-val { font-size:3rem; font-weight:800; color:var(--accent2); }
+    .servo-btns { display:flex; gap:8px; margin-top:12px; }
+    .servo-btn {
+      flex:1; padding:8px; border:1px solid var(--border); border-radius:8px;
+      background:transparent; color:var(--text); cursor:pointer;
+      font-family:'Syne',sans-serif; font-weight:700; font-size:.8rem;
+      text-transform:uppercase; letter-spacing:1px; transition:.2s;
+    }
+    .servo-btn:hover { border-color:var(--accent2); color:var(--accent2); background:rgba(0,196,255,.06); }
+    .servo-btn.active { border-color:var(--accent2); color:var(--accent2); background:rgba(0,196,255,.12); }
+
+    /* ── SLIDER ── */
+    .slider-wrap { margin-top:10px; }
+    .slider-val { font-size:2.4rem; font-weight:800; color:var(--accent); margin-bottom:10px; }
+    input[type=range] {
+      -webkit-appearance:none; width:100%; height:6px;
+      border-radius:6px; outline:none;
+      background: linear-gradient(to right, var(--accent) 0%, var(--accent) var(--pct,50%), var(--border) var(--pct,50%), var(--border) 100%);
+      cursor:pointer;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance:none; width:20px; height:20px;
+      border-radius:50%; background:var(--accent);
+      box-shadow:0 0 10px var(--accent); cursor:pointer;
+      border: 2px solid var(--bg);
+    }
+    .fan-range input[type=range] {
+      background: linear-gradient(to right, var(--accent2) 0%, var(--accent2) var(--pct,0%), var(--border) var(--pct,0%), var(--border) 100%);
+    }
+    .fan-range input[type=range]::-webkit-slider-thumb { background:var(--accent2); box-shadow:0 0 10px var(--accent2); }
+    .fan-range .slider-val { color:var(--accent2); }
+
+    /* ── LIGHT CHART ── */
+    .chart-area { height: 160px; position:relative; margin-top:8px; }
+    canvas { width:100%!important; }
+
+    /* ── RGB PICKER ── */
+    .rgb-wrap { display:flex; gap:20px; align-items:center; margin-top:6px; }
+    .rgb-preview {
+      width:120px; height:120px; border-radius:50%;
+      border: 2px solid var(--border);
+      background: #080808;
+      box-shadow: 0 0 30px rgba(0,0,0,.8);
+      flex-shrink:0; transition:.4s;
+    }
+    .rgb-controls { flex:1; display:flex; flex-direction:column; gap:10px; }
+    .rgb-row { display:flex; align-items:center; gap:10px; }
+    .rgb-row label { font-family:'Space Mono',monospace; font-size:.65rem; color:var(--muted); width:12px; }
+    .rgb-row input[type=range] { flex:1; height:4px; }
+    .r-range input[type=range] { background:linear-gradient(to right,#ff4d6d 0%,#ff4d6d var(--pct,0%),var(--border) var(--pct,0%),var(--border) 100%); }
+    .r-range input[type=range]::-webkit-slider-thumb { background:#ff4d6d; box-shadow:0 0 8px #ff4d6d; }
+    .g-range input[type=range] { background:linear-gradient(to right,#00ff88 0%,#00ff88 var(--pct,0%),var(--border) var(--pct,0%),var(--border) 100%); }
+    .g-range input[type=range]::-webkit-slider-thumb { background:#00ff88; box-shadow:0 0 8px #00ff88; }
+    .b-range input[type=range] { background:linear-gradient(to right,#00c4ff 0%,#00c4ff var(--pct,0%),var(--border) var(--pct,0%),var(--border) 100%); }
+    .b-range input[type=range]::-webkit-slider-thumb { background:#00c4ff; box-shadow:0 0 8px #00c4ff; }
+    .rgb-hex { font-family:'Space Mono',monospace; font-size:1rem; color:var(--text); text-align:center; margin-top:4px; }
+    .btn-apply {
+      background:transparent; border:1px solid var(--accent); color:var(--accent);
+      border-radius:8px; padding:8px 0; width:100%;
+      font-family:'Syne',sans-serif; font-weight:700; font-size:.8rem;
+      text-transform:uppercase; letter-spacing:2px; cursor:pointer; transition:.2s;
+      margin-top:4px;
+    }
+    .btn-apply:hover { background:rgba(0,255,136,.08); }
+
+    /* ── TOAST ── */
+    .toast {
+      position:fixed; bottom:28px; right:28px;
+      background:var(--surface); border:1px solid var(--border);
+      border-radius:10px; padding:12px 18px;
+      font-family:'Space Mono',monospace; font-size:.75rem;
+      color:var(--text); z-index:999;
+      transform:translateY(80px); opacity:0; transition:.3s;
+      max-width:280px;
+    }
+    .toast.show { transform:translateY(0); opacity:1; }
+    .toast.success { border-color:var(--accent); color:var(--accent); }
+    .toast.error { border-color:var(--accent3); color:var(--accent3); }
+
+    /* ── REFRESH BTN ── */
+    .refresh-btn {
+      position:fixed; bottom:28px; left:28px;
+      background:var(--surface); border:1px solid var(--border);
+      border-radius:50%; width:44px; height:44px;
+      cursor:pointer; color:var(--muted); font-size:1rem;
+      display:flex; align-items:center; justify-content:center;
+      transition:.2s; z-index:999;
+    }
+    .refresh-btn:hover { border-color:var(--accent); color:var(--accent); }
+    .refresh-btn.spinning { animation: spin 1s linear infinite; }
+    @keyframes spin { from{transform:rotate(0)} to{transform:rotate(360deg)} }
+
+    /* Loading skeleton */
+    .skeleton { background:linear-gradient(90deg,var(--border) 25%,var(--surface) 50%,var(--border) 75%); background-size:200%; animation:shimmer 1.5s infinite; border-radius:4px; }
+    @keyframes shimmer { from{background-position:200%} to{background-position:-200%} }
+
+    @media(max-width:900px){
+      main { grid-template-columns:1fr 1fr; padding:16px; }
+      .card-temp,.card-ledrgb,.card-servo,.card-humid,.card-fan,.card-light,.card-rgb { grid-column:span 1; }
+      .card-light,.card-rgb { grid-column:span 2; }
+    }
+    @media(max-width:560px){
+      main { grid-template-columns:1fr; }
+      .card-light,.card-rgb { grid-column:span 1; }
+      header { flex-direction:column; gap:10px; align-items:flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-dot"></div>
+    <div>
+      <div class="logo-text">IoT Dashboard</div>
+      <div class="logo-sub">Adafruit IO Control Panel</div>
+    </div>
+  </div>
+  <div class="config-bar">
+    <input id="io-user" type="text" placeholder="AIO Username" />
+    <span class="sep">|</span>
+    <input id="io-key" type="password" placeholder="AIO Key" />
+    <button class="btn-connect" id="btn-connect" onclick="connect()">Connect</button>
+  </div>
+  <div class="status-badge">
+    <div class="status-dot" id="status-dot"></div>
+    <span id="status-text">Disconnected</span>
+  </div>
+</header>
+
+<main>
+  <!-- TEMP -->
+  <div class="card card-temp">
+    <div class="card-label"><span class="dot"></span> Temperature</div>
+    <div class="gauge-wrap">
+      <svg class="gauge-svg" viewBox="0 0 200 200" id="gauge-svg">
+        <circle cx="100" cy="100" r="80" fill="none" stroke="#1a2535" stroke-width="14" stroke-dasharray="440" stroke-dashoffset="110" stroke-linecap="round" transform="rotate(135 100 100)" />
+        <circle cx="100" cy="100" r="80" fill="none" stroke="url(#gGrad)" stroke-width="14" stroke-linecap="round"
+          stroke-dasharray="440" stroke-dashoffset="110"
+          transform="rotate(135 100 100)"
+          id="gauge-arc" style="stroke-dashoffset:330; transition:stroke-dashoffset .8s cubic-bezier(.4,0,.2,1);" />
+        <defs>
+          <linearGradient id="gGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#00ff88"/>
+            <stop offset="100%" stop-color="#ffd166"/>
+          </linearGradient>
+        </defs>
+      </svg>
+      <div class="gauge-val" id="temp-val">--</div>
+      <div class="gauge-unit">°C</div>
+      <div class="gauge-range"><span>0</span><span>50</span><span>100</span></div>
+    </div>
+  </div>
+
+  <!-- LED RED -->
+  <div class="card card-ledrgb">
+    <div class="card-label"><span class="dot" style="background:var(--accent3)"></span> LED RGB</div>
+    <div class="toggle-wrap">
+      <div class="toggle-label-val off" id="led-val">OFF</div>
+      <label class="toggle">
+        <input type="checkbox" id="led-toggle" onchange="sendFeed('ledrgb', this.checked?'1':'0')">
+        <span class="slider"></span>
+      </label>
+    </div>
+  </div>
+
+  <!-- SERVO -->
+  <div class="card card-servo">
+    <div class="card-label"><span class="dot" style="background:var(--warn)"></span> Servo</div>
+    <div class="servo-display">
+      <div class="servo-val" id="servo-val">--</div>
+    </div>
+    <div class="servo-btns">
+      <button class="servo-btn" id="s-A" onclick="sendFeed('servo','A')">A</button>
+      <button class="servo-btn" id="s-B" onclick="sendFeed('servo','B')">B</button>
+      <button class="servo-btn" id="s-C" onclick="sendFeed('servo','C')">C</button>
+    </div>
+  </div>
+
+  <!-- HUMID -->
+  <div class="card card-humid">
+    <div class="card-label"><span class="dot" style="background:var(--accent2)"></span> Humidity</div>
+    <div class="slider-wrap">
+      <div class="slider-val" id="humid-val">--<span style="font-size:1rem;color:var(--muted)">%</span></div>
+      <input type="range" min="0" max="100" value="50" id="humid-range" oninput="sendFeed('humid',this.value); updateRange(this,'humid-val','%')" style="--pct:50%" />
+    </div>
+  </div>
+
+  <!-- FAN -->
+  <div class="card card-fan fan-range">
+    <div class="card-label"><span class="dot" style="background:var(--accent2)"></span> Fan Speed</div>
+    <div class="slider-wrap">
+      <div class="slider-val" id="fan-val">--</div>
+      <input type="range" min="0" max="255" value="0" id="fan-range" oninput="sendFeed('fan',this.value); updateRange(this,'fan-val','')" style="--pct:0%" />
+    </div>
+  </div>
+
+  <!-- LIGHT CHART -->
+  <div class="card card-light">
+    <div class="card-label"><span class="dot" style="background:var(--warn)"></span> Light Sensor — 24h</div>
+    <div class="chart-area">
+      <canvas id="light-chart"></canvas>
+    </div>
+  </div>
+
+  <!-- RGB -->
+  <!-- <div class="card card-rgb">
+    <div class="card-label"><span class="dot" style="background:#cc88ff"></span> RGB LED</div>
+    <div class="rgb-wrap">
+      <div class="rgb-preview" id="rgb-preview"></div>
+      <div class="rgb-controls">
+        <div class="rgb-row r-range">
+          <label>R</label>
+          <input type="range" min="0" max="255" value="8" id="r-range" oninput="updateRgb()" style="--pct:3%" />
+        </div>
+        <div class="rgb-row g-range">
+          <label>G</label>
+          <input type="range" min="0" max="255" value="8" id="g-range" oninput="updateRgb()" style="--pct:3%" />
+        </div>
+        <div class="rgb-row b-range">
+          <label>B</label>
+          <input type="range" min="0" max="255" value="8" id="b-range" oninput="updateRgb()" style="--pct:3%" />
+        </div>
+        <div class="rgb-hex" id="rgb-hex">#080808</div>
+        <button class="btn-apply" onclick="applyRgb()">Apply Color</button>
+      </div>
+    </div>
+  </div> -->
+</main>
+
+<button class="refresh-btn" id="refresh-btn" onclick="fetchAll()" title="Refresh">↻</button>
+<div class="toast" id="toast"></div>
+
+<!-- Chart.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+  // ── STATE ──
+  let AIO_USER = '', AIO_KEY = '', connected = false;
+  let lightChart;
+  let pollInterval;
+
+  // ── CONNECT ──
+  function connect() {
+    AIO_USER = document.getElementById('io-user').value.trim();
+    AIO_KEY  = document.getElementById('io-key').value.trim();
+    if (!AIO_USER || !AIO_KEY) { showToast('Please enter username and AIO key', 'error'); return; }
+    setStatus('connecting');
+    fetchAll().then(() => {
+      connected = true;
+      setStatus('online');
+      document.getElementById('btn-connect').textContent = 'Reconnect';
+      if (pollInterval) clearInterval(pollInterval);
+      pollInterval = setInterval(fetchAll, 10000);
+    }).catch(() => setStatus('error'));
+  }
+
+  function setStatus(s) {
+    const dot = document.getElementById('status-dot');
+    const txt = document.getElementById('status-text');
+    dot.className = 'status-dot ' + (s === 'online' ? 'online' : s === 'error' ? 'error' : '');
+    txt.textContent = s === 'online' ? 'Live' : s === 'error' ? 'Error' : 'Connecting…';
+  }
+
+  // ── API HELPERS ──
+  const base = () => `https://io.adafruit.com/api/v2/${AIO_USER}/feeds`;
+  const headers = () => ({ 'X-AIO-Key': AIO_KEY, 'Content-Type':'application/json' });
+
+  async function getFeed(key) {
+    const r = await fetch(`${base()}/${key}/data/last`, { headers: headers() });
+    if (!r.ok) throw new Error(r.status);
+    return r.json();
+  }
+
+  async function getFeedHistory(key, hours=24) {
+    const r = await fetch(`${base()}/${key}/data?limit=100`, { headers: headers() });
+    if (!r.ok) throw new Error(r.status);
+    return r.json();
+  }
+
+  async function sendFeed(key, value) {
+    if (!AIO_USER || !AIO_KEY) { showToast('Connect first!', 'error'); return; }
+    try {
+      const r = await fetch(`${base()}/${key}/data`, {
+        method: 'POST',
+        headers: headers(),
+        body: JSON.stringify({ value: String(value) })
+      });
+      if (!r.ok) throw new Error(r.status);
+      showToast(`✓ ${key} → ${value}`, 'success');
+      setTimeout(fetchAll, 1000);
+    } catch(e) { showToast(`✗ Failed: ${key}`, 'error'); }
+  }
+
+  // ── FETCH ALL ──
+  async function fetchAll() {
+    if (!AIO_USER || !AIO_KEY) return;
+    const btn = document.getElementById('refresh-btn');
+    btn.classList.add('spinning');
+    try {
+      const [temp, humid, ledrgb, fan, servo, lightData] = await Promise.all([
+        getFeed('temp'), getFeed('humid'), getFeed('ledrgb'),
+        getFeed('fan'), getFeed('servo'),
+        getFeedHistory('light')
+      ]);
+
+      // Temp
+      const t = parseFloat(temp.value);
+      document.getElementById('temp-val').textContent = isNaN(t) ? '--' : t.toFixed(2);
+      updateGauge(t, 0, 50);
+
+      // Humid
+      const h = parseFloat(humid.value);
+      if (!isNaN(h)) {
+        document.getElementById('humid-val').innerHTML = h.toFixed(1) + '<span style="font-size:1rem;color:var(--muted)">%</span>';
+        const hr = document.getElementById('humid-range');
+        hr.value = h; updateRangeEl(hr, h/100);
+      }
+
+      // LED Red
+      const led = ledrgb.value;
+      const tog = document.getElementById('led-toggle');
+      const isOn = led === '1' || led === 'ON' || led === 'true';
+      tog.checked = isOn;
+      const lv = document.getElementById('led-val');
+      lv.textContent = isOn ? 'ON' : 'OFF';
+      lv.className = 'toggle-label-val ' + (isOn ? 'on' : 'off');
+
+      // Fan
+      const f = parseFloat(fan.value);
+      if (!isNaN(f)) {
+        document.getElementById('fan-val').textContent = f.toFixed(0);
+        const fr = document.getElementById('fan-range');
+        fr.value = f; updateRangeEl(fr, f/255);
+      }
+
+      // Servo
+      const sv = servo.value;
+      document.getElementById('servo-val').textContent = sv || '--';
+      document.querySelectorAll('.servo-btn').forEach(b => {
+        b.classList.toggle('active', b.textContent === sv);
+      });
+
+      // // RGB
+      // const rgb = ledrgb.value;
+      // document.getElementById('rgb-hex').textContent = rgb;
+      // document.getElementById('rgb-preview').style.background = rgb;
+      // document.getElementById('rgb-preview').style.boxShadow = `0 0 40px ${rgb}`;
+      // if (rgb.startsWith('#') && rgb.length === 7) {
+      //   document.getElementById('r-range').value = parseInt(rgb.slice(1,3),16);
+      //   document.getElementById('g-range').value = parseInt(rgb.slice(3,5),16);
+      //   document.getElementById('b-range').value = parseInt(rgb.slice(5,7),16);
+      //   ['r','g','b'].forEach(c => {
+      //     const el = document.getElementById(c+'-range');
+      //     updateRangeEl(el, el.value/255);
+      //   });
+      // }
+
+      // Light chart
+      renderLightChart(lightData);
+
+    } catch(e) {
+      console.error(e);
+      setStatus('error');
+    } finally {
+      btn.classList.remove('spinning');
+    }
+  }
+
+  // ── GAUGE ──
+  function updateGauge(val, min, max) {
+    const total = 330; // degrees of arc in dasharray units (440 * 330/360 ≈ 402, adjust)
+    const pct = Math.max(0, Math.min(1, (val - min) / (max - min)));
+    // Full arc dasharray for 270° = 440 * 0.75 = 330
+    const filled = 330 * pct;
+    const offset = 440 - filled;
+    const arc = document.getElementById('gauge-arc');
+    if (arc) arc.style.strokeDashoffset = (440 - filled).toString();
+  }
+
+  // ── LIGHT CHART ──
+  function renderLightChart(data) {
+    const ctx = document.getElementById('light-chart').getContext('2d');
+    const sorted = [...data].sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
+    const labels = sorted.map(d => {
+      const dt = new Date(d.created_at);
+      return dt.getHours() + ':' + String(dt.getMinutes()).padStart(2,'0');
+    });
+    const vals = sorted.map(d => parseFloat(d.value) || 0);
+
+    if (lightChart) { lightChart.destroy(); }
+    lightChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          label: 'light',
+          data: vals,
+          borderColor: '#ffd166',
+          backgroundColor: 'rgba(255,209,102,0.08)',
+          borderWidth: 2,
+          pointRadius: 0,
+          pointHoverRadius: 4,
+          fill: true,
+          tension: 0.4
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend:{ display:false }, tooltip:{ backgroundColor:'#0f1923', borderColor:'#1a2535', borderWidth:1, titleColor:'#ffd166', bodyColor:'#e8f0fe', titleFont:{family:'Space Mono'}, bodyFont:{family:'Space Mono'} } },
+        scales: {
+          x: { ticks:{ color:'#4a6080', font:{family:'Space Mono',size:9}, maxTicksLimit:8 }, grid:{ color:'#1a2535' } },
+          y: { ticks:{ color:'#4a6080', font:{family:'Space Mono',size:9} }, grid:{ color:'#1a2535' } }
+        }
+      }
+    });
+  }
+
+  // // ── RGB ──
+  // function updateRgb() {
+  //   const r = parseInt(document.getElementById('r-range').value);
+  //   const g = parseInt(document.getElementById('g-range').value);
+  //   const b = parseInt(document.getElementById('b-range').value);
+  //   const hex = '#' + [r,g,b].map(v => v.toString(16).padStart(2,'0')).join('');
+  //   document.getElementById('rgb-hex').textContent = hex;
+  //   document.getElementById('rgb-preview').style.background = hex;
+  //   document.getElementById('rgb-preview').style.boxShadow = `0 0 40px ${hex}`;
+  //   ['r','g','b'].forEach(c => {
+  //     const el = document.getElementById(c+'-range');
+  //     updateRangeEl(el, el.value/255);
+  //   });
+  // }
+
+  // function applyRgb() {
+  //   const hex = document.getElementById('rgb-hex').textContent;
+  //   sendFeed('ledrgb', hex);
+  // }
+
+  // ── SLIDER HELPER ──
+  function updateRange(el, displayId, unit) {
+    const pct = (el.value - el.min) / (el.max - el.min) * 100;
+    el.style.setProperty('--pct', pct + '%');
+    const d = document.getElementById(displayId);
+    if (d) d.innerHTML = parseFloat(el.value).toFixed(1) + `<span style="font-size:1rem;color:var(--muted)">${unit}</span>`;
+  }
+
+  function updateRangeEl(el, frac) {
+    el.style.setProperty('--pct', (frac * 100) + '%');
+  }
+
+  // ── TOAST ──
+  function showToast(msg, type='') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast show ' + type;
+    clearTimeout(t._tid);
+    t._tid = setTimeout(() => t.className = 'toast', 3000);
+  }
+
+  // ── INIT ──
+  // Try to load saved creds
+  window.addEventListener('DOMContentLoaded', () => {
+    const u = localStorage.getItem('aio_user');
+    const k = localStorage.getItem('aio_key');
+    if (u) document.getElementById('io-user').value = u;
+    if (k) document.getElementById('io-key').value = k;
+  });
+
+  // Save creds on connect
+  const origConnect = connect;
+  window.connect = function() {
+    localStorage.setItem('aio_user', document.getElementById('io-user').value.trim());
+    localStorage.setItem('aio_key',  document.getElementById('io-key').value.trim());
+    origConnect();
+  };
+</script>
+</body>
+</html>

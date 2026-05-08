@@ -14,7 +14,7 @@
 #define AIO_KEY         "aio_JvkO706lwWx2JXFLOV4ojiEUMtD3"   // Replace with your Adafruit IO Key
 
 #define LIGHT_SENSOR_PIN 33
-#define led1_PIN 32    
+#define led1_PIN 32
 #define FAN_PIN 26
 #define UP_BUTTON_PIN 18
 #define DOWN_BUTTON_PIN 19
@@ -50,3 +50,4 @@ extern float glob_light;
 extern float glob_fan_speed;
 extern int glob_servo_angle;
 extern Servo myservo;
+extern int glob_ledrgb_state;

@@ -22,3 +22,8 @@ extern void Light_Task(void *pvParameters);
 extern void Fan_Task(void *pvParameters);
 extern void Servo_Task(int angle);
 extern void setupDoorTask();
+extern void LedRGB(int led_num, int led_state);
+
+//extern Adafruit_NeoPixel NeoPixel(4, led1_PIN , NEO_GRB + NEO_KHZ800);
+
+extern void setupLedTask();

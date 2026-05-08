@@ -13,6 +13,7 @@ float glob_humidity = 0.0;
 float glob_light = 0.0;
 float glob_fan_speed = 0.0;
 int glob_servo_angle = 0;
+int glob_ledrgb_state = 0;
 
 void temp_humi_monitor(void *pvParameters){
     dht20.begin();
@@ -114,4 +115,48 @@ void Servo_Task(int angle){
             delay(3000);        // Đợi đúng 3 giây (3000ms)
             myservo.write(0);   // Tự động đóng lại
         }
+}
+
+Adafruit_NeoPixel NeoPixel(4, led1_PIN , NEO_GRB + NEO_KHZ800);
+
+void setupLedTask(){
+     NeoPixel.begin();
+}
+
+void LedRGB(int led_num, int led_state) {
+    if(led_num == 0){
+        if (led_state == 1)NeoPixel.setPixelColor(0, NeoPixel.Color(0, 255, 0));
+        else NeoPixel.setPixelColor(0, NeoPixel.Color(0, 0, 0));
+        NeoPixel.show();
+    }
+    else if(led_num == 1){
+        if (led_state == 1)NeoPixel.setPixelColor(1, NeoPixel.Color(0, 0, 255));
+        else NeoPixel.setPixelColor(1, NeoPixel.Color(0, 0, 0));
+        NeoPixel.show();
+    }
+    else if(led_num == 2){
+        if (led_state == 1)NeoPixel.setPixelColor(2, NeoPixel.Color(255, 0, 0));
+        else NeoPixel.setPixelColor(2, NeoPixel.Color(0, 0, 0));
+        NeoPixel.show();
+    }
+    else if(led_num == 3){
+        if (led_state == 1)NeoPixel.setPixelColor(3, NeoPixel.Color(128, 128,128));
+        else NeoPixel.setPixelColor(3, NeoPixel.Color(0, 0, 0));
+        NeoPixel.show();
+    }
+    else if (led_num == 4){
+        if (led_state == 1) {
+            NeoPixel.setPixelColor(0, NeoPixel.Color(255, 255, 255));
+            NeoPixel.setPixelColor(1, NeoPixel.Color(255, 255, 255));
+            NeoPixel.setPixelColor(2, NeoPixel.Color(255, 255, 255));
+            NeoPixel.setPixelColor(3, NeoPixel.Color(255, 255, 255));
+            NeoPixel.show();
+        } else {
+            NeoPixel.setPixelColor(0, NeoPixel.Color(0, 0, 0));
+            NeoPixel.setPixelColor(1, NeoPixel.Color(0, 0, 0));
+            NeoPixel.setPixelColor(2, NeoPixel.Color(0, 0, 0));
+            NeoPixel.setPixelColor(3, NeoPixel.Color(0, 0, 0));
+            NeoPixel.show();
+        }
+    }
 }

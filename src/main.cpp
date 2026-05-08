@@ -13,6 +13,7 @@ Adafruit_MQTT_Publish temp = Adafruit_MQTT_Publish(&mqtt, AIO_USERNAME "/feeds/t
 
 Adafruit_MQTT_Subscribe controll_fan = Adafruit_MQTT_Subscribe(&mqtt, AIO_USERNAME "/feeds/fan");
 Adafruit_MQTT_Subscribe controll_servo = Adafruit_MQTT_Subscribe(&mqtt, AIO_USERNAME "/feeds/servo");
+Adafruit_MQTT_Subscribe controll_ledrgb = Adafruit_MQTT_Subscribe(&mqtt, AIO_USERNAME "/feeds/ledrgb");
 void MQTT_connect();
 
 void setup()
@@ -33,6 +34,7 @@ void setup()
   // 2. Kết nối MQTT
   mqtt.subscribe(&controll_fan);
   mqtt.subscribe(&controll_servo);
+  mqtt.subscribe(&controll_ledrgb);
   // 3. Đồng bộ NTP
   configTime(7 * 3600, 0, "pool.ntp.org");
   struct tm timeinfo;
@@ -47,6 +49,7 @@ void setup()
 
   // 4. Chạy Tasks
   setupDoorTask();
+  setupLedTask();
   xTaskCreate(LCD, "LCD", 4096, NULL, 2, NULL);
   xTaskCreate(temp_humi_monitor, "Task Temp Humi Monitor", 4096, NULL, 1, NULL);
   xTaskCreate(Light_Task, "Task Light Monitor", 4096, NULL, 1, NULL);
@@ -74,6 +77,15 @@ void loop(){
         Serial.print("Góc servo mới: ");
         Serial.println(glob_servo_angle);
         Servo_Task(glob_servo_angle);
+    }
+    if (subscription == &controll_ledrgb) {
+        // Chuyển giá trị nhận được từ text sang số thực (float)
+        Serial.print("Giá trị nhận được từ MQTT: ");
+        Serial.println((char *)controll_ledrgb.lastread);
+        glob_ledrgb_state = atoi((char *)controll_ledrgb.lastread); 
+        Serial.print("Trạng thái LED RGB mới: ");
+        Serial.println(glob_ledrgb_state);
+        LedRGB(4, glob_ledrgb_state);
     }
   }
 }
