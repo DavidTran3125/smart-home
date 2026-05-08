@@ -13,6 +13,7 @@ const activityLogSchema = new mongoose.Schema({
   timestamp: { type: Date, default: Date.now },
   action: { type: String, required: true },
   description: { type: String },
+  is_read: { type: Boolean, default: false },
 });
 
 export default mongoose.model("ActivityLog", activityLogSchema);

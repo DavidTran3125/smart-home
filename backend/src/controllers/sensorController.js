@@ -5,6 +5,7 @@
 
 import SensorData from "../models/SensorData.js";
 import Device from "../models/Device.js";
+import { getUserDeviceIds } from "../middlewares/AccessControlMiddleware.js";
 
 /**
  * GET /api/v1/sensors/latest
@@ -13,8 +14,11 @@ import Device from "../models/Device.js";
  */
 export const getLatestSensorData = async (req, res) => {
   try {
-    // Aggregation: lấy bản ghi mới nhất cho mỗi type
+    const userDeviceIds = await getUserDeviceIds(req.user.id);
+
+    // Aggregation: lấy bản ghi mới nhất cho mỗi type (lọc theo thiết bị của nhà mình)
     const latestData = await SensorData.aggregate([
+      { $match: { device_id: { $in: userDeviceIds } } },
       { $sort: { timestamp: -1 } },
       {
         $group: {
@@ -77,11 +81,15 @@ export const getSensorHistory = async (req, res) => {
       limit = 50,
     } = req.query;
 
-    // Xây dựng bộ lọc
-    const filter = {};
+    const userDeviceIds = await getUserDeviceIds(req.user.id);
+    const filter = { device_id: { $in: userDeviceIds } };
 
     if (device_id) {
-      filter.device_id = device_id;
+      if (userDeviceIds.some(id => id.equals(device_id) || id.toString() === device_id)) {
+        filter.device_id = device_id;
+      } else {
+        return res.status(403).json({ success: false, error: "Không có quyền truy cập dữ liệu cảm biến của thiết bị này" });
+      }
     }
 
     if (type) {

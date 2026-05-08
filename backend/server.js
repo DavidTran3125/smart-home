@@ -25,6 +25,7 @@ import deviceRoutes from "./src/routes/deviceRoutes.js";
 import sensorRoutes from "./src/routes/sensorRoutes.js";
 import alertRoutes from "./src/routes/alertRoutes.js";
 import logRoutes from "./src/routes/logRoutes.js";
+import homeRoutes from "./src/routes/homeRoutes.js";
 
 // Kết nối MongoDB
 connectDB();
@@ -53,6 +54,7 @@ app.use("/api/v1/devices", deviceRoutes);
 app.use("/api/v1/sensors", sensorRoutes);
 app.use("/api/v1", alertRoutes); // Gộp /api/v1/alerts + /api/v1/thresholds
 app.use("/api/v1/logs", logRoutes);
+app.use("/api/v1/homes", homeRoutes);
 
 // ========================
 // API cũ (giữ lại để tương thích)

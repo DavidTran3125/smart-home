@@ -17,6 +17,7 @@ const openApiSpec = {
     { name: "Thresholds", description: "Threshold configuration" },
     { name: "Logs", description: "Activity logs" },
     { name: "Legacy", description: "Legacy IoT endpoints" },
+    { name: "Homes", description: "Home and invitation management" },
   ],
   components: {
     securitySchemes: {
@@ -80,6 +81,7 @@ const openApiSpec = {
           threshold_min_value: { type: "number" },
           threshold_max_value: { type: "number" },
           threshold_is_active: { type: "boolean" },
+          homeId: { type: "string" },
           last_seen: { type: "string", format: "date-time" },
         },
       },
@@ -123,6 +125,26 @@ const openApiSpec = {
         properties: {
           success: { type: "boolean", example: false },
           error: { type: "string" },
+        },
+      },
+      Home: {
+        type: "object",
+        properties: {
+          _id: { type: "string" },
+          name: { type: "string" },
+          admin: { type: "string" },
+          members: { type: "array", items: { type: "string" } },
+        },
+      },
+      Invitation: {
+        type: "object",
+        properties: {
+          _id: { type: "string" },
+          email: { type: "string", format: "email" },
+          homeId: { type: "string" },
+          token: { type: "string" },
+          status: { type: "string", enum: ["pending", "accepted"] },
+          createdAt: { type: "string", format: "date-time" },
         },
       },
     },
@@ -457,6 +479,98 @@ const openApiSpec = {
           },
         },
         responses: { 200: { description: "Command sent" } },
+      },
+    },
+    "/api/v1/homes": {
+      post: {
+        tags: ["Homes"],
+        summary: "Create a new home (Admin)",
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["name"],
+                properties: { name: { type: "string" } },
+              },
+            },
+          },
+        },
+        responses: {
+          201: { description: "Home created" },
+          500: { description: "Server error" },
+        },
+      },
+    },
+    "/api/v1/homes/invite": {
+      post: {
+        tags: ["Homes"],
+        summary: "Invite a new member to home (Admin)",
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["homeId", "email"],
+                properties: {
+                  homeId: { type: "string" },
+                  email: { type: "string", format: "email" },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          200: { description: "Invitation sent" },
+          403: { description: "Forbidden" },
+        },
+      },
+    },
+    "/api/v1/homes/register": {
+      post: {
+        tags: ["Homes"],
+        summary: "Register using invitation token",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["token", "email", "username", "password", "full_name"],
+                properties: {
+                  token: { type: "string" },
+                  email: { type: "string", format: "email" },
+                  username: { type: "string" },
+                  password: { type: "string", format: "password" },
+                  full_name: { type: "string" },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          200: { description: "Registration successful" },
+          400: { description: "Bad request or invalid token" },
+        },
+      },
+    },
+    "/api/v1/homes/{homeId}/members/{memberId}": {
+      delete: {
+        tags: ["Homes"],
+        summary: "Remove member from home (Admin)",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: "homeId", in: "path", required: true, schema: { type: "string" } },
+          { name: "memberId", in: "path", required: true, schema: { type: "string" } },
+        ],
+        responses: {
+          200: { description: "Member removed" },
+          403: { description: "Forbidden" },
+        },
       },
     },
   },

@@ -8,6 +8,7 @@
 import { Router } from "express";
 import { authMiddleware } from "../middlewares/AuthMiddleware.js";
 import { isAdmin } from "../middlewares/RoleMiddleware.js";
+import { verifyDeviceAccess } from "../middlewares/AccessControlMiddleware.js";
 import {
   getActiveAlerts,
   getAllAlerts,
@@ -39,6 +40,6 @@ router.put("/alerts/:id/resolve", authMiddleware, isAdmin, resolveAlert);
 router.get("/thresholds", authMiddleware, getThresholds);
 
 // PUT /api/v1/thresholds/:deviceId    — Cập nhật ngưỡng (Admin)
-router.put("/thresholds/:deviceId", authMiddleware, isAdmin, updateThreshold);
+router.put("/thresholds/:deviceId", authMiddleware, isAdmin, verifyDeviceAccess, updateThreshold);
 
 export default router;

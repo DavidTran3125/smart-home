@@ -11,6 +11,12 @@ const deviceSchema = new mongoose.Schema({
   threshold_min_value: { type: Number },
   threshold_max_value: { type: Number },
   threshold_is_active: { type: Boolean, default: false },
+  homeId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Home",
+    required: true,
+    index: true,
+  },
   last_seen: { type: Date, default: Date.now },
 });
 
