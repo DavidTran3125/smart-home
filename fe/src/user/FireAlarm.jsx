@@ -1,151 +1,125 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const FireAlarm = () => {
-  // State quản lý trạng thái an toàn (true: bình thường, false: có cháy)
+  
   const [isSafe, setIsSafe] = useState(true);
+  const [currentTemp, setCurrentTemp] = useState("--");
+  const [riskLevel, setRiskLevel] = useState("Thấp");
+  const [rateOfRise, setRateOfRise] = useState("--"); 
 
-  // Dữ liệu mô phỏng lịch sử khi có sự cố
-  const mockAlertHistory = [
-    { id: 1, time: '20:04:15 - 22/03/2026', location: 'Phòng khách', type: 'Phát hiện khói', status: 'Chưa xử lý' },
-    { id: 2, time: '20:04:10 - 22/03/2026', location: 'Phòng khách', type: 'Nhiệt độ tăng cao đột ngột (65.5°C)', status: 'Chưa xử lý' },
-  ];
+  
+  const [prevTemp, setPrevTemp] = useState(null);
+  const [prevTimestamp, setPrevTimestamp] = useState(null);
+
+  
+  const INTERNVAL_SCAN = 5000; 
+  const DANGER_RATE_MIN = 12;   
+  const FIXED_TEMP_LIMIT = 65; 
+
+  const fetchFireData = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch("http://localhost:3000/api/v1/sensors/latest", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      let latestData = await res.json();
+      let sensorArray = Array.isArray(latestData) ? latestData : (latestData.data || []);
+
+      const tempSensor = sensorArray.find(s => s.type === "temperature" || s.type === "nhietdo");
+      
+      if (tempSensor) {
+        const t = tempSensor.value;
+        const currentTimestamp = new Date(tempSensor.timestamp);
+        
+        setCurrentTemp(t);
+
+        let currentSafeStatus = true;
+        let currentRisk = "Thấp";
+        let r_text = "0.0";
+
+        if (prevTemp !== null && prevTimestamp !== null) {
+          const dT = t - prevTemp; 
+          const dtSeconds = (currentTimestamp - prevTimestamp) / 1000; 
+          const dtMinutes = dtSeconds / 60; 
+
+          if (dtMinutes > 0) {
+            const R = dT / dtMinutes; 
+            setRateOfRise(R.toFixed(1));
+
+            if (R > DANGER_RATE_MIN) {
+              currentSafeStatus = false;
+              currentRisk = `CỰC CAO - NHIỆT TĂNG ĐỘT NGỘT (+${R.toFixed(1)}°C/phút)`;
+            } else if (t > FIXED_TEMP_LIMIT) {
+              currentSafeStatus = false;
+              currentRisk = `CỰC CAO - NHIỆT ĐỘ VƯỢT NGƯỠNG (${t}°C)`;
+            } else if (R > DANGER_RATE_MIN / 2) {
+              currentRisk = "Trung bình (Theo dõi)";
+            }
+          }
+        }
+
+        setIsSafe(currentSafeStatus);
+        setRiskLevel(currentRisk);
+        setPrevTemp(t);
+        setPrevTimestamp(currentTimestamp);
+      }
+    } catch (error) {
+      console.error("Lỗi fetch dữ liệu:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchFireData(); 
+    const interval = setInterval(fetchFireData, INTERNVAL_SCAN);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="p-8 w-full max-w-7xl mx-auto font-sans relative">
       
-      {/* NÚT MÔ PHỎNG (Dành cho Developer để test UI) */}
-      <button 
-        onClick={() => setIsSafe(!isSafe)}
-        className={`absolute top-8 right-8 px-4 py-2 rounded-lg font-bold shadow-md transition-all ${isSafe ? 'bg-red-100 text-red-600 hover:bg-red-200' : 'bg-green-100 text-green-600 hover:bg-green-200'}`}
-      >
-        {isSafe ? '🔥 Mô phỏng Cháy' : '✅ Khôi phục An toàn'}
-      </button>
-
-      {/* Header */}
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-gray-900 mb-1">Cảnh báo cháy</h1>
-        <p className="text-gray-500">Theo dõi và cảnh báo nguy cơ cháy nổ</p>
+        <p className="text-gray-500text-sm">Hệ thống phát hiện tăng nhiệt đột ngột (Rate-of-Rise)</p>
       </div>
 
-      {/* Thẻ Trạng thái Hệ thống (Lớn) */}
-      <div className={`relative w-full rounded-xl border-2 p-12 flex flex-col items-center justify-center transition-all duration-500 mb-6 
-        ${isSafe ? 'bg-[#f0fdf4] border-[#86efac]' : 'bg-[#fef2f2] border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.5)]'}`}
+      <div className={`relative w-full rounded-2xl border-2 p-12 flex flex-col items-center justify-center transition-all duration-500 mb-6 
+        ${isSafe ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-500 shadow-[0_0_20px_rgba(239,68,68,0.3)] animate-pulse'}`}
       >
-        {/* Label góc trái trên */}
-        <div className="absolute top-5 left-5 flex items-center">
-          <svg className={`w-5 h-5 mr-2 ${isSafe ? 'text-green-600' : 'text-red-600'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <span className={`font-semibold ${isSafe ? 'text-gray-800' : 'text-red-700'}`}>Trạng thái hệ thống</span>
-        </div>
-
-        {/* Badge góc phải trên */}
-        <div className={`absolute top-5 right-5 px-3 py-1 rounded text-xs font-bold tracking-wider text-white 
-          ${isSafe ? 'bg-[#10b981]' : 'bg-red-600 animate-pulse'}`}
-        >
+        <div className={`px-4 py-1 rounded-full text-xs font-bold mb-4 ${isSafe ? 'bg-green-500' : 'bg-red-600'} text-white`}>
           {isSafe ? 'AN TOÀN' : 'NGUY HIỂM'}
         </div>
 
-        {/* Center Content */}
-        <div className="flex flex-col items-center text-center mt-4">
-          {/* Icon */}
-          <div className={`w-24 h-24 rounded-full flex items-center justify-center mb-4 
-            ${isSafe ? 'bg-green-100' : 'bg-red-100 animate-bounce'}`}
-          >
-            {isSafe ? (
-              <svg className="w-12 h-12 text-[#10b981]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-              </svg>
-            ) : (
-              <svg className="w-14 h-14 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-            )}
-          </div>
-          
-          <h2 className={`text-3xl font-bold mb-2 ${isSafe ? 'text-[#10b981]' : 'text-red-600 uppercase tracking-wide'}`}>
-            {isSafe ? '✓ Hệ thống an toàn' : 'Phát hiện nguy cơ cháy!'}
+        <div className="text-center">
+          <h2 className={`text-6xl font-black mb-3 ${isSafe ? 'text-green-600' : 'text-red-600'}`}>
+            {isSafe ? 'BÌNH THƯỜNG' : 'BÁO ĐỘNG CHÁY!'}
           </h2>
-          <p className={`${isSafe ? 'text-gray-500' : 'text-red-500 font-medium'}`}>
-            {isSafe ? 'Không phát hiện nguy cơ cháy nổ' : 'Yêu cầu kiểm tra khu vực ngay lập tức! Hệ thống báo động đã kích hoạt.'}
-          </p>
+          <p className={`${isSafe ? 'text-gray-600' : 'text-red-700'} font-medium`}>Tình trạng: {riskLevel}</p>
         </div>
       </div>
 
-      {/* Grid 2 Thẻ Cảm Biến */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        
-        {/* Cảm biến khói */}
-        <div className={`bg-white p-6 rounded-xl border transition-colors ${isSafe ? 'border-gray-200' : 'border-red-300'}`}>
-          <div className="flex items-center mb-6 text-gray-600 font-medium">
-            <span className="mr-2">☁️</span> Cảm biến khói
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className={`bg-white p-6 rounded-2xl border transition-colors ${!isSafe && rateOfRise > DANGER_RATE_MIN ? 'border-red-300' : 'border-gray-200'}`}>
+          <div className="text-gray-500 text-sm font-bold uppercase mb-4 flex items-center">
+            📈 Tốc độ tăng nhiệt (5s gần nhất)
           </div>
-          <h3 className={`text-4xl font-bold mb-6 ${isSafe ? 'text-[#10b981]' : 'text-red-600'}`}>
-            {isSafe ? 'Bình thường' : 'Phát hiện khói!'}
-          </h3>
-          <span className={`px-3 py-1.5 rounded-lg text-sm font-medium ${isSafe ? 'bg-gray-100 text-gray-700' : 'bg-red-100 text-red-700'}`}>
-            {isSafe ? 'An toàn' : 'Nguy hiểm'}
-          </span>
+          <div className={`text-6xl font-black ${rateOfRise > DANGER_RATE_MIN ? 'text-red-600' : 'text-gray-900'}`}>
+            {rateOfRise}°C<span className="text-2xl text-gray-400">/min</span>
+          </div>
+          <p className="mt-2 text-xs text-gray-400">Ngưỡng báo động: Tăng &gt; {DANGER_RATE_MIN}°C/phút</p>
         </div>
 
-        {/* Cảm biến Nhiệt độ */}
-        <div className={`bg-white p-6 rounded-xl border transition-colors ${isSafe ? 'border-gray-200' : 'border-red-300'}`}>
-          <div className="flex items-center mb-6 text-gray-600 font-medium">
-            <span className="mr-2">🌡️</span> Nhiệt độ bất thường
+        <div className={`bg-white p-6 rounded-2xl border transition-colors ${!isSafe && currentTemp > FIXED_TEMP_LIMIT ? 'border-red-300' : 'border-gray-200'}`}>
+          <div className="text-gray-500 text-sm font-bold uppercase mb-4 flex items-center">
+            🌡️ Nhiệt độ phòng thực tế
           </div>
-          <h3 className={`text-4xl font-bold mb-6 ${isSafe ? 'text-[#10b981]' : 'text-red-600'}`}>
-            {isSafe ? '29.7°C' : '65.5°C'}
-          </h3>
-          <span className={`px-3 py-1.5 rounded-lg text-sm font-medium ${isSafe ? 'bg-gray-100 text-gray-700' : 'bg-red-100 text-red-700'}`}>
-            {isSafe ? 'Bình thường' : 'Mức nhiệt nguy hiểm'}
-          </span>
+          <div className={`text-6xl font-black ${currentTemp > FIXED_TEMP_LIMIT ? 'text-red-600' : 'text-gray-900'}`}>
+            {currentTemp}°C
+          </div>
+          <p className="mt-2 text-xs text-gray-400">Ngưỡng báo động cố định: {FIXED_TEMP_LIMIT}°C</p>
         </div>
 
       </div>
-
-      {/* Lịch sử cảnh báo */}
-      <div className="bg-white p-6 rounded-xl border border-gray-200">
-        <h3 className="font-bold text-gray-900 mb-6">Lịch sử cảnh báo</h3>
-        
-        {isSafe ? (
-          // Trạng thái trống (Không có lỗi)
-          <div className="flex flex-col items-center justify-center py-12 text-gray-400">
-            <svg className="w-16 h-16 mb-4 text-gray-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-            </svg>
-            <p>Không có cảnh báo cháy nào</p>
-          </div>
-        ) : (
-          // Bảng chi tiết khi có lỗi
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-gray-50 text-gray-600 uppercase">
-                <tr>
-                  <th className="px-4 py-3 rounded-tl-lg">Thời gian</th>
-                  <th className="px-4 py-3">Khu vực</th>
-                  <th className="px-4 py-3">Loại cảnh báo</th>
-                  <th className="px-4 py-3 rounded-tr-lg text-right">Trạng thái</th>
-                </tr>
-              </thead>
-              <tbody>
-                {mockAlertHistory.map((alert) => (
-                  <tr key={alert.id} className="border-b border-gray-100 hover:bg-red-50 transition-colors">
-                    <td className="px-4 py-3 font-medium text-gray-900">{alert.time}</td>
-                    <td className="px-4 py-3">{alert.location}</td>
-                    <td className="px-4 py-3 text-red-600 font-medium">{alert.type}</td>
-                    <td className="px-4 py-3 text-right">
-                      <span className="px-2 py-1 text-xs font-semibold bg-red-100 text-red-700 rounded-md">
-                        {alert.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-
     </div>
   );
 };

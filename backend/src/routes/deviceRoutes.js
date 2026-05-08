@@ -35,4 +35,6 @@ router.post("/:id/control", authMiddleware, controlDevice);
 // DELETE /api/v1/devices/:id      — Xóa thiết bị khỏi hệ thống (Admin)
 router.delete("/:id", authMiddleware, isAdmin, deleteDevice);
 
+
+
 export default router;
