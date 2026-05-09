@@ -6,7 +6,7 @@
  * Observer trong Observer Pattern.
  * Lắng nghe sự kiện "newSensorData" từ SensorEventBus,
  * kiểm tra ngưỡng (threshold) trên Device,
- * tạo Alert và gửi email cảnh báo tới TẤT CẢ users (Admin + Gia đình).
+ * tạo Alert và gửi email cảnh báo tới users trong cùng Home.
  */
 
 import Device from "../../models/Device.js";
@@ -33,7 +33,7 @@ class AlertSystem {
 
   /**
    * Kiểm tra ngưỡng khi nhận dữ liệu cảm biến mới.
-   * Nếu vượt ngưỡng → tạo Alert + gửi email cho tất cả users.
+   * Nếu vượt ngưỡng → tạo Alert + gửi email cho users trong cùng Home.
    */
   async checkThreshold({ feedName, value, timestamp }) {
     try {
@@ -97,8 +97,9 @@ class AlertSystem {
 
       console.log(`🚨 [AlertSystem] Tạo cảnh báo: ${message}`);
 
-      // Gửi email cảnh báo tới TẤT CẢ users (Admin + Gia đình)
+      // Gửi email cảnh báo tới users trong cùng Home với thiết bị.
       await sendAlertMail({
+        homeId: device.homeId,
         deviceName: device.name,
         type: handler.getType(),
         value: numericValue,

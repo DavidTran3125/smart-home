@@ -1,6 +1,7 @@
 import express from "express";
 import {
   createHome,
+  handleListMembers,
   handleInvite,
   handleRegister,
   handleRemoveMember,
@@ -11,7 +12,9 @@ import { isAdmin } from "../middlewares/RoleMiddleware.js";
 const router = express.Router();
 
 router.post("/", authMiddleware, isAdmin, createHome);
-router.post("/invite", authMiddleware, isAdmin, handleInvite);
+// Returns all users in the home, including the admin.
+router.get("/:homeId/members", authMiddleware, isAdmin, handleListMembers);
+router.post("/:homeId/members/invite", authMiddleware, isAdmin, handleInvite);
 router.post("/register", handleRegister);
 router.delete("/:homeId/members/:memberId", authMiddleware, isAdmin, handleRemoveMember);
 

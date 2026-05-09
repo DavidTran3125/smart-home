@@ -7,6 +7,12 @@ const userSchema = new mongoose.Schema({
   role: { type: String, enum: ["Gia đình", "Admin"], default: "Gia đình" },
   email: { type: String, required: true, unique: true },
   phone: { type: String },
+  homeId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Home",
+    required: true,
+    index: true,
+  },
   created_at: { type: Date, default: Date.now },
 });
 

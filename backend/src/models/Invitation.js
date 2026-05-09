@@ -15,4 +15,13 @@ const invitationSchema = new mongoose.Schema({
 // TTL Index: Automatically delete documents 7 days after creation
 invitationSchema.index({ createdAt: 1 }, { expireAfterSeconds: 604800 });
 
+// Only one active invitation per email per home.
+invitationSchema.index(
+  { email: 1, homeId: 1, status: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { status: "pending" },
+  }
+);
+
 export default mongoose.model("Invitation", invitationSchema);

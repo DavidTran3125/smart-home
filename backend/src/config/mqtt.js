@@ -8,7 +8,7 @@
  *
  * Pipeline khi nhận dữ liệu MQTT:
  *   MQTT message → SensorEventBus.publishSensorData()
- *     → [Observer] LatestDataCache  : cập nhật RAM
+ *   MQTT message → SensorEventBus.publishSensorData()
  *     → [Observer] DatabaseLogger   : ghi SensorData vào MongoDB
  *     → [Observer] AlertSystem      : kiểm tra ngưỡng → tạo Alert + gửi email
  */
@@ -17,7 +17,6 @@ import MQTTClient from "../services/MQTTClient.js";
 import SensorEventBus from "../services/SensorEventBus.js";
 import DatabaseLogger from "../services/observers/DatabaseLogger.js";
 import AlertSystem from "../services/observers/AlertSystem.js";
-import LatestDataCache from "../services/observers/LatestDataCache.js";
 
 // ========================
 // 1. Khởi tạo Singleton MQTT Client
@@ -31,11 +30,9 @@ const client = mqttClient.getClient();
 const eventBus = SensorEventBus.getInstance();
 
 // Tạo và đăng ký các Observers
-const latestDataCache = new LatestDataCache();
 const databaseLogger = new DatabaseLogger();
 const alertSystem = new AlertSystem();
 
-latestDataCache.init(); // Observer 1: Cập nhật cache RAM
 databaseLogger.init();  // Observer 2: Ghi vào MongoDB
 alertSystem.init();     // Observer 3: Kiểm tra ngưỡng + gửi email
 
@@ -79,6 +76,4 @@ client.on("error", (err) => {
   console.error("❌ MQTT Error:", err.message);
 });
 
-// Export latestDataCache để server.js có thể dùng cho API /api/iot-data
-export { latestDataCache };
-export default { client: mqttClient, latestDataCache };
+export default { client: mqttClient };

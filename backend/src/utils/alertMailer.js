@@ -1,8 +1,8 @@
 /**
- * Alert Mailer — Gửi email cảnh báo tới TẤT CẢ users (Admin + Gia đình)
+ * Alert Mailer — Gửi email cảnh báo tới users trong cùng Home
  *
  * Khi hệ thống phát hiện ngưỡng bị vượt, module này sẽ:
- * 1. Query tất cả User trong DB để lấy danh sách email
+ * 1. Query User cùng Home với thiết bị để lấy danh sách email
  * 2. Gửi email cảnh báo tới từng người
  */
 
@@ -60,9 +60,10 @@ function buildAlertHTML({ deviceName, type, value, unit, severity, message, thre
 }
 
 /**
- * Gửi email cảnh báo tới tất cả users trong hệ thống.
+ * Gửi email cảnh báo tới users trong cùng Home với thiết bị.
  *
  * @param {object} alertData - Thông tin cảnh báo
+ * @param {import('mongoose').Types.ObjectId|string} alertData.homeId - Home nhận cảnh báo
  * @param {string} alertData.deviceName - Tên thiết bị
  * @param {string} alertData.type - Loại cảm biến (temperature, humidity, ...)
  * @param {number} alertData.value - Giá trị đo được
@@ -74,8 +75,13 @@ function buildAlertHTML({ deviceName, type, value, unit, severity, message, thre
  */
 async function sendAlertMail(alertData) {
   try {
-    // 1. Lấy tất cả email của users (Admin + Gia đình)
-    const users = await User.find({}, "email full_name").lean();
+    if (!alertData.homeId) {
+      console.warn("[AlertMailer] Thiếu homeId, không gửi email cảnh báo");
+      return;
+    }
+
+    // 1. Lấy email của users trong cùng Home với thiết bị
+    const users = await User.find({ homeId: alertData.homeId }, "email full_name").lean();
     if (!users || users.length === 0) {
       console.warn("[AlertMailer] Không tìm thấy user nào để gửi email");
       return;
@@ -103,7 +109,7 @@ async function sendAlertMail(alertData) {
     // 3. Tạo nội dung email
     const html = buildAlertHTML(alertData);
 
-    // 4. Gửi email tới tất cả users
+    // 4. Gửi email tới users trong cùng Home
     const info = await transporter.sendMail({
       from: `"Smart Home Alert" <${config.gmail}>`,
       to: recipientEmails,
@@ -112,7 +118,7 @@ async function sendAlertMail(alertData) {
     });
 
     console.log(
-      `📧 [AlertMailer] Đã gửi email cảnh báo tới ${users.length} users: ${recipientEmails}`
+      `📧 [AlertMailer] Đã gửi email cảnh báo tới ${users.length} users trong Home ${alertData.homeId}: ${recipientEmails}`
     );
   } catch (error) {
     console.error("[AlertMailer] Lỗi gửi email:", error.message);

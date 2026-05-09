@@ -8,8 +8,6 @@
  * "newSensorData" tới tất cả các Observer đang lắng nghe:
  *   - DatabaseLogger  : Ghi dữ liệu vào MongoDB (SensorData collection)
  *   - AlertSystem     : Kiểm tra ngưỡng, tạo Alert, gửi email cảnh báo
- *   - LatestDataCache : Cập nhật bộ nhớ RAM cho API /api/iot-data
- *
  * Sử dụng EventEmitter của Node.js làm nền tảng.
  */
 

@@ -1,7 +1,14 @@
+import mongoose from "mongoose";
 import User from "../models/User.js";
+import Home from "../models/Home.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import config from "../config/index.js";
+
+const buildAutoHomeName = (userData) => {
+  const base = userData.full_name || userData.username || "user";
+  return `Home of ${base}`;
+};
 
 export const register = async (data) => {
   const { username, password, email, full_name } = data;
@@ -14,15 +21,30 @@ export const register = async (data) => {
 
   const hashed = await bcrypt.hash(password, 10);
 
+  const homeId = new mongoose.Types.ObjectId();
   const user = await User.create({
     username,
     password: hashed,
     email,
     full_name,
-    role: (await User.countDocuments()) === 0 ? "Admin" : "Gia đình",
+    role: "Admin",
+    homeId,
   });
 
-  return user;
+  try {
+    const home = await Home.create({
+      _id: homeId,
+      name: buildAutoHomeName(user),
+      admin: user._id,
+      members: [],
+    });
+
+    const { password: _, ...userData } = user.toObject();
+    return { user: userData, home };
+  } catch (error) {
+    await User.findByIdAndDelete(user._id);
+    throw new Error("Lỗi hệ thống khi tạo nhà cho người dùng. Vui lòng thử lại.");
+  }
 };
 
 export const login = async ({ email, password }) => {
