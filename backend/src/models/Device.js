@@ -18,6 +18,11 @@ const deviceSchema = new mongoose.Schema({
     index: true,
   },
   last_seen: { type: Date, default: Date.now },
+  owner_id: { 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: 'User', // Liên kết tới bảng User
+    required: true 
+  }
 });
 
 export default mongoose.model("Device", deviceSchema);
