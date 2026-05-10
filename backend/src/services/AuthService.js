@@ -51,6 +51,10 @@ export const login = async ({ email, password }) => {
   const user = await User.findOne({ email });
   if (!user) throw new Error("Sai email hoặc mật khẩu");
 
+  if (user.status === "invalid") {
+    throw new Error("Tài khoản đã bị vô hiệu hóa");
+  }
+
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) throw new Error("Sai email hoặc mật khẩu");
 

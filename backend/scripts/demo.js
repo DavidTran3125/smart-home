@@ -12,6 +12,21 @@ const seedData = async () => {
   try {
     await connectDB();
 
+    const systemAdminPassword = await bcrypt.hash("systemadmin123", 10);
+    let systemAdmin = await User.findOne({ email: "systemadmin@example.com" });
+    if (!systemAdmin) {
+      systemAdmin = new User({ email: "systemadmin@example.com" });
+    }
+    systemAdmin.username = "system_admin";
+    systemAdmin.email = "systemadmin@example.com";
+    systemAdmin.password = systemAdminPassword;
+    systemAdmin.full_name = "System Admin Demo";
+    systemAdmin.role = "SystemAdmin";
+    systemAdmin.status = "active";
+    systemAdmin.homeId = undefined;
+    await systemAdmin.save();
+    console.log("✅ Đã tạo SystemAdmin demo: systemadmin@example.com / systemadmin123");
+
     // 1. Tạo Admin User Demo
     let admin = await User.findOne({ email: "admin@example.com" });
     let home = null;
@@ -26,6 +41,7 @@ const seedData = async () => {
         password: hashedPassword,
         full_name: "Admin Demo",
         role: "Admin",
+        status: "active",
         homeId,
       });
       console.log("✅ Đã tạo user Admin demo: admin@example.com / admin123");
@@ -112,7 +128,7 @@ const seedData = async () => {
       // Dùng findOneAndUpdate với upsert để tránh tạo trùng khi chạy lại script
       await Device.findOneAndUpdate(
         { feed_name: dev.feed_name },
-        { ...dev, homeId: home._id },
+        { ...dev, homeId: home._id, owner_id: home.admin },
         { upsert: true, new: true },
       );
     }
