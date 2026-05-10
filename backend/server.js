@@ -25,6 +25,7 @@ import sensorRoutes from "./src/routes/sensorRoutes.js";
 import alertRoutes from "./src/routes/alertRoutes.js";
 import logRoutes from "./src/routes/logRoutes.js";
 import homeRoutes from "./src/routes/homeRoutes.js";
+import systemRoutes from "./src/routes/systemRoutes.js";
 
 // Kết nối MongoDB
 connectDB();
@@ -53,6 +54,7 @@ app.use("/api/v1/sensors", sensorRoutes);
 app.use("/api/v1", alertRoutes); // Gộp /api/v1/alerts + /api/v1/thresholds
 app.use("/api/v1/logs", logRoutes);
 app.use("/api/v1/homes", homeRoutes);
+app.use("/api/v1/system", systemRoutes);
 
 // ========================
 // Global Error Handler (phải đặt SAU tất cả routes)
@@ -94,5 +96,8 @@ app.listen(port, () => {
   );
   console.log(
     `   [Homes]      Members    http://localhost:${port}/api/v1/homes/:homeId/members`,
+  );
+  console.log(
+    `   [System]     Admin      http://localhost:${port}/api/v1/system`,
   );
 });

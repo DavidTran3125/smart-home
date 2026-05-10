@@ -9,6 +9,10 @@ import MQTTClient from "../services/MQTTClient.js";
 import DeviceFactory from "../services/DeviceFactory.js";
 import Home from "../models/Home.js";
 import { getUserDeviceIds } from "../middlewares/AccessControlMiddleware.js";
+import {
+  getStatusFromControlValue,
+  normalizeDeviceStatus,
+} from "../utils/deviceStatus.js";
 
 /**
  * GET /api/v1/devices
@@ -48,7 +52,7 @@ export const getDeviceById = async (req, res) => {
 export const createDevice = async (req, res) => {
   let createdDevice = null;
   try {
-    const { name, type, model, pin, pin_mode, feed_name,
+    const { name, type, model, pin, pin_mode, feed_name, status,
             threshold_min_value, threshold_max_value, threshold_is_active, homeId } = req.body;
 
     if (!name || !homeId) {
@@ -70,7 +74,9 @@ export const createDevice = async (req, res) => {
       pin,
       pin_mode,
       feed_name,
+      status: normalizeDeviceStatus(status),
       homeId,
+      owner_id: home.admin,
       threshold_min_value,
       threshold_max_value,
       threshold_is_active,
@@ -107,7 +113,15 @@ export const createDevice = async (req, res) => {
  */
 export const updateDevice = async (req, res) => {
   try {
-    const device = await Device.findByIdAndUpdate(req.params.id, req.body, {
+    const updateData = { ...req.body };
+    delete updateData.homeId;
+    delete updateData.owner_id;
+
+    if (updateData.status !== undefined) {
+      updateData.status = normalizeDeviceStatus(updateData.status);
+    }
+
+    const device = await Device.findByIdAndUpdate(req.params.id, updateData, {
       new: true,
       runValidators: true,
     });
@@ -149,7 +163,7 @@ export const controlDevice = async (req, res) => {
     await mqttClient.publishToFeed(device.feed_name, command);
 
     oldStatus = device.status;
-    const newStatus = Number(value) === 0 ? "Tắt" : "Bật";
+    const newStatus = getStatusFromControlValue(value);
     
     // BƯỚC 1: Cập nhật trạng thái trong DB
     device.status = newStatus;
@@ -213,6 +227,5 @@ export const deleteDevice = async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 };
-
 
 
