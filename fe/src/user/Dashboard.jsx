@@ -7,6 +7,7 @@ import Environment from './Environment';
 import Devices from './Devices';
 import FireAlarm from './FireAlarm';
 import History from './History';
+import Home from './Home'; // Import file Home bạn vừa làm
 
 import TemperatureCard from './component/cards/TemperatureCard';
 import HumidityCard from './component/cards/HumidityCard';
@@ -20,6 +21,7 @@ import EnvironmentStatus from './component/cards/EnvironmentStatus';
 const isDeviceOn = (status) => {
   return (
     status === 'Bat' ||
+    status === 'Bật' || // Thêm check "Bật" có dấu nếu cần
     status === 'ON' ||
     status === 'on' ||
     status === 1 ||
@@ -151,7 +153,6 @@ const DashboardLayout = () => {
 
   const [isLoadingDevices, setIsLoadingDevices] = useState(true);
 
-
   const isControlling = useRef(false);
 
   const fetchDevices = async () => {
@@ -215,8 +216,6 @@ const DashboardLayout = () => {
     }
   };
 
-
-
   const renderContent = () => {
 
     switch (activePage) {
@@ -228,6 +227,9 @@ const DashboardLayout = () => {
             isLoading={isLoadingDevices}
           />
         );
+
+      case 'nha-cua-toi': // Xử lý render trang Nhà của tôi
+        return <Home />;
 
       case 'moi-truong':
         return <Environment />;
@@ -258,7 +260,6 @@ const DashboardLayout = () => {
         );
     }
   };
-
 
 
   return (

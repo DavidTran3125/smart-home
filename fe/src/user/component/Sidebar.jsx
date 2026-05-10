@@ -1,5 +1,12 @@
 import React from "react";
-import {Squares2X2Icon, SunIcon, LightBulbIcon, ExclamationTriangleIcon, ClockIcon} from "@heroicons/react/24/outline";
+import {
+  Squares2X2Icon, 
+  SunIcon, 
+  LightBulbIcon, 
+  ExclamationTriangleIcon, 
+  ClockIcon,
+  HomeIcon // Đã thêm HomeIcon
+} from "@heroicons/react/24/outline";
 
 const Sidebar = ({ activePage, setActivePage, handleLogout }) => {
   const menuItems = [
@@ -8,6 +15,12 @@ const Sidebar = ({ activePage, setActivePage, handleLogout }) => {
       label: "Tổng quan",
       icon: Squares2X2Icon,
       color: "text-green-500",
+    },
+    {
+      id: "nha-cua-toi", // Đã thêm menu Nhà của tôi
+      label: "Nhà của tôi",
+      icon: HomeIcon,
+      color: "text-indigo-500",
     },
     {
       id: "moi-truong",
