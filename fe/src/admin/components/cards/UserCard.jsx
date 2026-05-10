@@ -1,50 +1,14 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { UserGroupIcon } from "@heroicons/react/24/outline";
 
-const UserCard = () => {
-    const [userCount, setUserCount] = useState({
-        total: 0,
-        admin: 0,
-        family: 0,
-    });
-
-    const [isLoading, setIsLoading] = useState(true);
-
-    useEffect(() => {
-        const fetchUserCount = async () => {
-            try {
-                const token = localStorage.getItem("token");
-                const res = await fetch("http://localhost:3000/api/v1/users", {
-                    method: "GET",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": `Bearer ${token}`, 
-                    }
-                });
-
-                if (!res.ok) throw new Error("Không thể lấy danh sách người dùng");
-                const data = await res.json();
-                const userArray = Array.isArray(data) ? data : (data.data || []);
-                
-                const admins = userArray.filter(u => u.role === 'Admin');
-                const families = userArray.filter(u => u.role === 'Gia dinh' || u.role === 'Gia đình');
-                
-                setUserCount({
-                    total: userArray.length,
-                    admin: admins.length,
-                    family: families.length,
-                });
-            } catch (error) {
-                console.log("Lỗi gọi API:", error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        fetchUserCount();
-    }, []);
+// Nhận stats và isLoading từ AdminDashboard
+const UserCard = ({ stats, isLoading }) => {
+    // Bóc tách dữ liệu từ object stats truyền vào
+    // totalUsers, admin, family được tính toán từ Dashboard
+    const { totalUsers = 0, admin = 0, family = 0 } = stats || {};
 
     return (
-        <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow duration-300">
+        <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-300">
             <div className="flex justify-between items-start">
                 <p className="text-[15px] font-bold text-gray-900 mt-2">Tổng số User</p>
                 <div className="p-3 bg-blue-50 rounded-full text-blue-600">
@@ -54,15 +18,26 @@ const UserCard = () => {
             
             <div className="mt-2">
                 <h3 className="text-5xl font-extrabold text-blue-600">
-                    {isLoading ? "..." : userCount.total}
+                    {isLoading ? (
+                        <span className="animate-pulse">...</span>
+                    ) : (
+                        totalUsers
+                    )}
                 </h3>
             </div>
 
-            <div className="mt-4 flex items-center text-[15px] text-gray-500 font-medium">
+            <div className="mt-4 flex items-center text-[13px] text-gray-500 font-medium">
                 {isLoading ? (
-                    <span>Đang tải...</span>
+                    <span>Đang cập nhật...</span>
                 ) : (
-                    <span>{userCount.admin} Quản trị viên, {userCount.family} Thành viên</span>
+                    <div className="flex gap-2">
+                        <span className="bg-blue-50 px-2 py-0.5 rounded text-blue-700">
+                            {admin} Admin
+                        </span>
+                        <span className="bg-gray-100 px-2 py-0.5 rounded text-gray-700">
+                            {family} Gia đình
+                        </span>
+                    </div>
                 )}
             </div>
         </div>

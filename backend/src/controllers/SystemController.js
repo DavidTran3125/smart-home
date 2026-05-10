@@ -92,3 +92,44 @@ export const getLogs = async (req, res) => {
     sendError(res, error);
   }
 };
+
+
+
+
+
+
+
+
+
+
+
+
+// Controller cho tạo mới
+export const createUserController = async (req, res) => {
+  try {
+    const user = await systemService.createAdminUser(req.body);
+    res.status(201).json({ success: true, data: user });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
+// Controller cho xóa vĩnh viễn
+export const hardDeleteUserController = async (req, res) => {
+  try {
+    const result = await systemService.hardDeleteUser(req.params.id);
+    res.json({ success: true, ...result });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
+// Controller cho Toggle
+export const toggleUserController = async (req, res) => {
+  try {
+    const user = await systemService.toggleStatus(req.params.id);
+    res.json({ success: true, data: user });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};

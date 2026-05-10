@@ -20,9 +20,9 @@ const userSchema = new mongoose.Schema({
   homeId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Home",
-    required: function () {
-      return this.role !== "SystemAdmin";
-    },
+    // required: function () {
+    //   return this.role !== "SystemAdmin";
+    // },
     index: true,
   },
   invalidated_at: { type: Date },

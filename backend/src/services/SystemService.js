@@ -4,6 +4,7 @@ import ActivityLog from "../models/ActivityLog.js";
 import Alert from "../models/Alert.js";
 import Home from "../models/Home.js";
 import { normalizeDeviceStatus } from "../utils/deviceStatus.js";
+import bcrypt from "bcrypt";
 
 const SYSTEM_ADMIN_ROLE = "SystemAdmin";
 const ACTIVE_STATUS = "active";
@@ -262,4 +263,46 @@ export const getLogs = async (query) => {
     totalPages: Math.ceil(total / limitNum),
     data,
   };
+};
+
+
+
+
+
+
+
+
+
+
+
+
+// HÀM MỚI 1: Tạo User (dành riêng cho Admin)
+export const createAdminUser = async (userData) => {
+  const { email, username, password } = userData;
+  const existing = await User.findOne({ $or: [{ email }, { username }] });
+  if (existing) throw new Error("Email hoặc Username đã tồn tại");
+
+  const salt = await bcrypt.genSalt(10);
+  const hashedPassword = await bcrypt.hash(password, salt);
+
+  const newUser = new User({ ...userData, password: hashedPassword, status: "active" });
+  await newUser.save();
+  return newUser;
+};
+
+// HÀM MỚI 2: Xóa vĩnh viễn khỏi Database (Hard Delete)
+export const hardDeleteUser = async (id) => {
+  const user = await User.findById(id);
+  if (!user) throw new Error("Không tìm thấy người dùng");
+  await User.findByIdAndDelete(id);
+  return { message: "Đã xóa vĩnh viễn người dùng khỏi hệ thống" };
+};
+
+// HÀM MỚI 3: Toggle Trạng thái (Bật/Tắt)
+export const toggleStatus = async (id) => {
+  const user = await User.findById(id);
+  if (!user) throw new Error("Không tìm thấy người dùng");
+  user.status = user.status === "active" ? "invalid" : "active";
+  await user.save();
+  return user;
 };

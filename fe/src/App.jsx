@@ -30,7 +30,7 @@ const getUser = () => {
 const AdminRoute = ({ children }) => {
   const user = getUser();
   if (!user) return <Navigate to="/login" replace />;
-  if (user.role !== 'Admin') return <Navigate to="/login" replace />;
+  if (user.role !== 'SystemAdmin') return <Navigate to="/login" replace />;
   return children;
 };
 
@@ -38,7 +38,7 @@ const UserRoute = ({ children }) => {
   const user = getUser();
   if (!user) return <Navigate to="/login" replace />;
   const isFamily = user.role === 'Gia đình' || user.role === 'Gia dinh';
-  if (!isFamily && user.role !== 'Admin') return <Navigate to="/login" replace />;
+  if (!isFamily && user.role !== 'SystemAdmin') return <Navigate to="/login" replace />;
   return children;
 };
 

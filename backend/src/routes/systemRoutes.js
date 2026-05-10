@@ -9,6 +9,9 @@ import {
   invalidateUser,
   reactivateUser,
   updateUser,
+  createUserController,
+  hardDeleteUserController,
+  toggleUserController,
 } from "../controllers/SystemController.js";
 
 const router = Router();
@@ -24,4 +27,16 @@ router.patch("/users/:id/reactivate", reactivateUser);
 router.get("/devices", getDevices);
 router.get("/logs", getLogs);
 
+
+
+
+
+
+
+
+
+
+router.post("/users/create", createUserController);        // Thêm mới hoàn toàn
+router.delete("/users/:id/hard-delete", hardDeleteUserController); // Xóa mất xác
+router.patch("/users/:id/toggle", toggleUserController);
 export default router;

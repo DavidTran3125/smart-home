@@ -31,7 +31,7 @@ export default function Login() {
         localStorage.setItem("user", JSON.stringify(data.user));
         console.log(data.user);
         console.log(data.user.role);
-        if (data.user.role === "Admin") {
+        if (data.user.role === "SystemAdmin") {
           navigate("/admin");
         } else {
           navigate("/user");
