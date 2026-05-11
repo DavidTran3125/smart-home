@@ -38,7 +38,8 @@ const UserRoute = ({ children }) => {
   const user = getUser();
   if (!user) return <Navigate to="/login" replace />;
   const isFamily = user.role === 'Gia đình' || user.role === 'Gia dinh';
-  if (!isFamily && user.role !== 'SystemAdmin') return <Navigate to="/login" replace />;
+  const isHomeAdmin = user.role === 'Admin';
+  if (!isFamily && !isHomeAdmin) return <Navigate to="/login" replace />;
   return children;
 };
 

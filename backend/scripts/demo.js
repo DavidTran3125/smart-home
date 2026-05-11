@@ -13,71 +13,63 @@ const seedData = async () => {
     await connectDB();
 
     const systemAdminPassword = await bcrypt.hash("systemadmin123", 10);
-    let systemAdmin = await User.findOne({ email: "systemadmin@example.com" });
-    if (!systemAdmin) {
-      systemAdmin = new User({ email: "systemadmin@example.com" });
-    }
-    systemAdmin.username = "system_admin";
-    systemAdmin.email = "systemadmin@example.com";
-    systemAdmin.password = systemAdminPassword;
-    systemAdmin.full_name = "System Admin Demo";
-    systemAdmin.role = "SystemAdmin";
-    systemAdmin.status = "active";
-    systemAdmin.homeId = undefined;
-    await systemAdmin.save();
+    const adminPassword = await bcrypt.hash("admin123", 10);
+    const member1Password = await bcrypt.hash("member123", 10);
+    const member2Password = await bcrypt.hash("member456", 10);
+
+    const systemAdmin = await User.create({
+      username: "system_admin",
+      email: "systemadmin@example.com",
+      password: systemAdminPassword,
+      full_name: "System Admin Demo",
+      role: "SystemAdmin",
+      status: "active",
+      homeId: undefined,
+    });
     console.log("✅ Đã tạo SystemAdmin demo: systemadmin@example.com / systemadmin123");
 
-    // 1. Tạo Admin User Demo
-    let admin = await User.findOne({ email: "admin@example.com" });
-    let home = null;
+    const homeId = new mongoose.Types.ObjectId();
+    const admin = await User.create({
+      username: "admin_demo",
+      email: "admin@example.com",
+      password: adminPassword,
+      full_name: "Admin Demo",
+      role: "Admin",
+      status: "active",
+      homeId,
+    });
+    console.log("✅ Đã tạo user Admin demo: admin@example.com / admin123");
 
-    if (!admin) {
-      const hashedPassword = await bcrypt.hash("admin123", 10);
-      const homeId = new mongoose.Types.ObjectId();
+    const member1 = await User.create({
+      username: "family_member_1",
+      email: "member1@example.com",
+      password: member1Password,
+      full_name: "Family Member 1",
+      role: "Gia đình",
+      status: "active",
+      homeId,
+    });
 
-      admin = await User.create({
-        username: "admin_demo",
-        email: "admin@example.com",
-        password: hashedPassword,
-        full_name: "Admin Demo",
-        role: "Admin",
-        status: "active",
-        homeId,
-      });
-      console.log("✅ Đã tạo user Admin demo: admin@example.com / admin123");
+    const member2 = await User.create({
+      username: "family_member_2",
+      email: "member2@example.com",
+      password: member2Password,
+      full_name: "Family Member 2",
+      role: "Gia đình",
+      status: "active",
+      homeId,
+    });
 
-      home = await Home.create({
-        _id: homeId,
-        name: "Căn hộ Demo",
-        admin: admin._id,
-        members: [],
-      });
-      console.log("✅ Đã tạo Home demo: Căn hộ Demo");
-    } else {
-      if (admin.homeId) {
-        home = await Home.findById(admin.homeId);
-      }
+    console.log("✅ Đã tạo 2 user Gia đình demo: member1@example.com / member123, member2@example.com / member456");
 
-      if (!home) {
-        home = await Home.findOne({ admin: admin._id });
-      }
+    const home = await Home.create({
+      _id: homeId,
+      name: "Căn hộ Demo",
+      admin: admin._id,
+      members: [member1._id, member2._id],
+    });
+    console.log("✅ Đã tạo Home demo: Căn hộ Demo");
 
-      if (!home) {
-        home = await Home.create({
-          name: "Căn hộ Demo",
-          admin: admin._id,
-          members: [],
-        });
-        console.log("✅ Đã tạo Home demo: Căn hộ Demo");
-      }
-
-      if (!admin.homeId || admin.homeId.toString() !== home._id.toString()) {
-        admin.homeId = home._id;
-        await admin.save();
-      }
-    }
-
-    // 3. Hardcode danh sách thiết bị khớp với Adafruit Feeds
     const devices = [
       {
         name: "Cảm biến Nhiệt độ",
@@ -125,12 +117,11 @@ const seedData = async () => {
 
     console.log("⏳ Đang nạp thiết bị vào DB...");
     for (const dev of devices) {
-      // Dùng findOneAndUpdate với upsert để tránh tạo trùng khi chạy lại script
-      await Device.findOneAndUpdate(
-        { feed_name: dev.feed_name },
-        { ...dev, homeId: home._id, owner_id: home.admin },
-        { upsert: true, new: true },
-      );
+      await Device.create({
+        ...dev,
+        homeId: home._id,
+        owner_id: admin._id,
+      });
     }
 
     console.log("✅ Đã nạp thành công 7 thiết bị vào Home của Admin!");
