@@ -1049,12 +1049,213 @@ Việc lựa chọn kiến trúc Hybrid (MVC + Event-Driven) kết hợp cùng b
 
 
 \section{Tính năng đặc trưng}
+\subsection{Định hướng công nghệ phần mềm}
+Hệ thống được thiết kế theo kiến trúc MVC (Model - View - Control) kết hợp mô hình hướng sự kiện (Event-Drive), giúp tối ưu hóa việc phân tách giữa quản lý dữ liệu, giao diện người dùng và logic điều phối. Để giải quyết các bài toán đặc thù của hệ thống IoT, nền tảng đã áp dụng các mẫu thiết kế phần mềm (Design Pattern) tiêu biểu: 
+\begin{itemize}
+	\item \textbf{Singleton Pattern:} Được sử dụng trong việc thiết lập và quản lý các kết nối quan trọng như cơ sở dữ liệu (MongoDB) và dịch vụ gửi email (Nodemailer). Mẫu thiết kế này đảm bảo toàn bộ ứng dụng chỉ sử dụng một phiên kết nối (instance) duy nhất, giúp tối ưu hóa tài nguyên máy chủ và ngăn chặn tình trạng xung đột dữ liệu.
+	\item \textbf{Observer Pattern:} Đóng vai trò cốt lõi trong cơ chế cập nhật dữ liệu thời gian thực (Real-time). Khi có bất kỳ sự thay đổi nào từ cảm biến phần cứng, hệ thống đóng vai trò là Subject sẽ lập tức phát tín hiệu (broadcast) đến các Observer (giao diện Dashboard trên React). Nhờ đó, trạng thái môi trường và thiết bị được vẽ lại ngay lập tức mà không cần người dùng phải tải lại trang.
+	\item \textbf{Factory Method Pattern:} Hỗ trợ khởi tạo linh hoạt các loại thiết bị khác nhau (như cảm biến khói, DHT20, động cơ servo, quạt, còi báo động) trong mã nguồn. Việc này đảm bảo nguyên tắc Đóng/Mở (Open/Closed Principle), cho phép dễ dàng tích hợp thêm các thiết bị IoT mới trong tương lai mà không cần can thiệp hay sửa đổi logic cốt lõi của hệ thống.
+\end{itemize}
+
+\subsection{Hệ thống phân quyền (RBAC) và quản lý lời mời thông minh}
+Hệ thống áp dụng cơ chế Phân quyền dựa trên vai trò (Role-Based Access Control) chặt chẽ với hai cấp độ chính: Chủ nhà (Admin) và Thành viên (Gia đình). Các route và API được bảo vệ bằng Middleware kiểm tra token (JWT), đảm bảo chỉ Admin mới có quyền cấu hình ngưỡng an toàn và quản lý thành viên, trong khi Thành viên chỉ có thể quan sát và điều khiển thiết bị.
+
+Đặc biệt, hệ thống cung cấp một cơ chế gia nhập nhà thông minh. Thay vì tạo tài khoản rời rạc, Admin sẽ sử dụng chức năng gửi lời mời. Nền tảng Backend sẽ sinh ra một mã Token bảo mật có thời hạn, gắn với địa chỉ email của người được mời, lưu trữ vào collection \textbf{invitations} với trạng thái \textbf{pending}, và gửi link đăng ký trực tiếp qua hệ thống Nodemailer. Khi người thân nhấp vào liên kết, email đăng ký sẽ bị khóa cứng (không thể chỉnh sửa) và tài khoản mới tạo ra sẽ tự động được gán quyền "Gia đình" cùng ID của ngôi nhà (\textbf{homeId}) hiện tại.
+
+\subsection{Giám sát thời gian thực và điều khiển Optimistic UI}
+Hệ thống giám sát liên tục các thông số môi trường thông qua mạng lưới cảm biến nhiệt độ, độ ẩm. Để nâng cao trải nghiệm người dùng, kỹ thuật Optimistic Update được áp dụng trên Frontend. Khi người dùng thao tác bật/tắt thiết bị, giao diện sẽ lập tức thay đổi trạng thái hình ảnh để phản hồi ngay thao tác, trong lúc hệ thống gửi lệnh API ngầm xuống thiết bị phần cứng. Nếu có lỗi xảy ra do mất kết nối mạng hoặc thiết bị phần cứng từ chối, giao diện sẽ tự động khôi phục (\textbf{rollback}) về trạng thái thực tế và hiển thị thông báo lỗi.
+
+Trong các tình huống khẩn cấp (\textbf{nhiệt độ tăng cao bất thường, độ ẩm thay đổi đột ngột, có dấu hiệu hỏa hoạn,...}), hệ thống sẽ lập tức lưu vết sự kiện (\textbf{log}), đẩy cảnh báo khẩn cấp lên màn hình Dashboard và tự động kích hoạt quy trình an toàn (\textbf{bật còi báo động, mở cửa thoát hiểm bằng động cơ servo}).
 
 \section{Công nghệ sử dụng}
+\subsection{Backend (API Server)}
 
-\section{Tổng kết}
+\begin{itemize}
+	\item \textbf{Node.js \& Express.js} Khung ứng dụng (framework) mã nguồn mở và môi trường thực thi phía máy chủ. Express.js được sử dụng để xây dựng hệ thống RESTful API, cung cấp khả năng định tuyến (routing) mạnh mẽ và xử lý các middleware kiểm tra quyền truy cập một cách linh hoạt.
+	\item \textbf{SON Web Token (JWT) \& bcrypt:} Cung cấp cơ chế xác thực (Authentication) không trạng thái (stateless) an toàn. bcrypt được dùng để băm (hash) mật khẩu người dùng trước khi lưu vào cơ sở dữ liệu, đảm bảo bảo mật thông tin nội bộ.
+	\item \textbf{Nodemailer:} Thư viện hỗ trợ gửi email tự động từ server. Trong dự án này, Nodemailer đảm nhiệm vai trò gửi các liên kết chứa token bảo mật để mời thành viên mới gia nhập vào hệ thống quản lý nhà thông minh.
+\end{itemize}
+
+\subsection{Cơ sở dữ liệu (Database)}
+\begin{itemize}
+	\item \textbf{MongoDB:} Hệ quản trị cơ sở dữ liệu phi quan hệ (NoSQL) lưu trữ dữ liệu dưới dạng Document (JSON-like). Đặc thù của dữ liệu cảm biến IoT là phát sinh liên tục và có cấu trúc linh hoạt, do đó MongoDB là sự lựa chọn tối ưu để lưu trữ lịch sử trạng thái thiết bị và dữ liệu môi trường.
+	\item \textbf{Mongoose (ODM):} Thư viện Object Data Modeling cho MongoDB và Node.js. Mongoose giúp định nghĩa các Schema (lược đồ) chặt chẽ cho các thực thể như User, Home, Device, và Invitation, hỗ trợ kiểm tra tính hợp lệ của dữ liệu trước khi ghi vào cơ sở dữ liệu.
+\end{itemize}
+
+\subsection{Frontend (Giao diện người dùng)}
+\begin{itemize}
+	\item \textbf{React.js:} Thư viện JavaScript mã nguồn mở dùng để xây dựng giao diện người dùng (UI) theo hướng component (thành phần). React cho phép quản lý trạng thái (state) nội bộ hiệu quả, hỗ trợ kỹ thuật Optimistic Update để phản hồi ngay lập tức các thao tác điều khiển bật/tắt thiết bị của người dùng.
+	\item \textbf{Tailwind CSS:} Khung CSS tiện ích (Utility-first CSS framework) giúp thiết kế giao diện linh hoạt, đáp ứng (responsive) tốt trên cả màn hình máy tính và thiết bị di động mà không cần viết quá nhiều file CSS tùy chỉnh.
+	\item \textbf{Heroicons:} hư viện biểu tượng vector SVG được tích hợp để thiết kế thanh điều hướng (Sidebar) và các nút thao tác trên Dashboard, giúp giao diện trở nên trực quan và hiện đại hơn.
+\end{itemize}
+
+
+\subsection{Nền tảng IoT và Giao thức giao tiếp}
+\begin{itemize}
+	\item \textbf{Giao thức MQTT:} Giao thức truyền tin nhắn theo mô hình Publish/Subscribe (Xuất bản/Đăng ký) cực kỳ nhẹ, được thiết kế đặc biệt cho các thiết bị IoT có băng thông thấp. MQTT giúp truyền tải dữ liệu cảm biến và lệnh điều khiển giữa Backend và phần cứng gần như ngay lập tức (Real-time).
+	\item \textbf{Adafruit IO:} Đóng vai trò là một MQTT Broker trung gian, quản lý các luồng dữ liệu (feeds) giữa vi điều khiển phần cứng và API Server, đảm bảo tính liên tục và ổn định của tín hiệu điều khiển.
+\end{itemize}
 
 \section{Định hướng phát triển trong tương lai}
+
+\subsection{Nâng cấp kiến trúc phần mềm và kỹ thuật hạ tầng}
+Khi hệ thống có nhu cầu mở rộng để cung cấp dịch vụ quản lý cho quy mô lớn hơn (như quản lý tự động hóa và an ninh cho nhiều căn hộ trong một chung cư), định hướng phát triển sẽ chuyển đổi dần từ kiến trúc Monolithic (MVC nguyên khối) sang mô hình Microservices. Các chức năng cốt lõi như Quản lý người dùng (Identity Service), Giám sát thiết bị IoT (IoT Gateway Service) và Xử lý cảnh báo (Alert Service) sẽ được phân tách thành các dịch vụ độc lập. Điều này giúp tăng cường khả năng chịu tải, dễ dàng mở rộng tài nguyên (scale) cho từng dịch vụ riêng biệt và giảm thiểu tối đa rủi ro toàn hệ thống bị sập khi một dịch vụ gặp lỗi, đảm bảo tính sẵn sàng cao cho hệ thống an ninh.
+
+\subsection{Tích hợp Trí tuệ nhân tạo (AI) và Machine Learning}
+Hiện tại, cơ chế cảnh báo của hệ thống đang hoạt động chủ yếu dựa trên các ngưỡng tĩnh được thiết lập sẵn (Rule-based). Trong tương lai, dữ liệu lịch sử về nhiệt độ, độ ẩm và nồng độ hạt khói trong không khí sẽ được tổng hợp để huấn luyện các mô hình Machine Learning. Các mô hình học máy (như Random Forest hoặc Neural Networks phân tích chuỗi thời gian) sẽ có khả năng nhận diện các mẫu (patterns) biến đổi môi trường bất thường. Từ đó, hệ thống có thể phân biệt chính xác giữa các tình huống "Báo cháy giả" (như khói sinh ra tức thời do nấu ăn trong bếp) và "Báo cháy thật" (khói lan tỏa kết hợp nhiệt độ tăng đều do hỏa hoạn thực sự), giúp tăng độ tin cậy của hệ thống báo động và tránh gây hoang mang cho người sử dụng.
+
+\section{Kiểm thử}
+\subsection{Giao diện đăng nhập và xác thực}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/login.png} 
+    \caption{Giao diện đăng nhập và xác thực người dùng.}
+    \label{fig:dang-nhap}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/register.png} 
+    \caption{Giao diện đăng ký.}
+    \label{fig:dang-ky}
+\end{figure}
+
+
+\subsection{System Admin}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/dashboardadmin.png} 
+    \caption{Giao diện tổng quan của System Admin.}
+    \label{fig:dashboardadmin}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/manage-user.png} 
+    \caption{Giao diện quản lý người dùng của System Admin.}
+    \label{fig:manage-user}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/add-user.png} 
+    \caption{Giao diện thêm người dùng mới của System Admin.}
+    \label{fig:add-user}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/manage-device.png} 
+    \caption{Giao diện quản lý thiết bị của System Admin.}
+    \label{fig:manage-device}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/logs.png} 
+    \caption{Giao diện logs của System Admin.}
+    \label{fig:logs}
+\end{figure}
+
+\subsection{Admin Home}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/dashboaduser.png} 
+    \caption{Giao diện tổng quan của Admin Home.}
+    \label{fig:dashboard-admin}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/home.png} 
+    \caption{Giao diện Home của System Admin.}
+    \label{fig:home}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/environemt.png} 
+    \caption{Giao diện môi trường của System Admin.}
+    \label{fig:environment}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/device.png} 
+    \caption{Giao diện thiết bị của System Admin.}
+    \label{fig:device}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/alert.png} 
+    \caption{Giao diện cảnh báo của System Admin.}
+    \label{fig:alert}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/member.png} 
+    \caption{Giao diện thành viên của System Admin.}
+    \label{fig:member}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/config.png} 
+    \caption{Giao diện chỉnh cấu hình cảm biến của System Admin.}
+    \label{fig:config}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/diaryhome.png} 
+    \caption{Giao diện nhật ký nhà của System Admin.}
+    \label{fig:diary}
+\end{figure}
+
+\subsection{Member Home}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/dashboardmember.png} 
+    \caption{Giao diện tổng quan của Member Home.}
+    \label{fig:dashboard-member}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/homemember.png} 
+    \caption{Giao diện Home của Member Home.}
+    \label{fig:home-user}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/environement-member.png} 
+    \caption{Giao diện môi trường của Member Home.}
+    \label{fig:environement-member}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/device-member.png} 
+    \caption{Giao diện thiết bị của Member Home.}
+    \label{fig:device-member}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/alert-member.png} 
+    \caption{Giao diện cảnh báo của Member Home.}
+    \label{fig:alert-member}
+\end{figure}
+
+\section{Tổng kết}
+Dự án Hệ thống Quản lý Nhà thông minh (Smart Home) đã được phát triển và triển khai thành công, đáp ứng trọn vẹn các mục tiêu thiết kế và yêu cầu kỹ thuật đề ra ban đầu. Xuyên suốt quá trình thực hiện, hệ thống đã được xây dựng bài bản dựa trên hệ sinh thái công nghệ hiện đại (MongoDB, Express.js, React.js, Node.js) kết hợp cùng giao thức truyền thông IoT (MQTT) để đảm bảo khả năng giám sát và điều khiển thiết bị phần cứng với độ trễ tối thiểu.
+
+Dự án không chỉ dừng lại ở việc thao tác bật/tắt thiết bị cơ bản mà còn giải quyết thành công các bài toán phức tạp trong thực tế. Các tính năng nổi bật như hệ thống Phân quyền người dùng (Role-Based Access Control) bảo mật, cơ chế gửi lời mời gia nhập nhà thông minh qua email, và kỹ thuật cập nhật giao diện tức thời (Optimistic UI) đều đã hoạt động mượt mà, mang lại trải nghiệm tương tác liền mạch cho người sử dụng. Bên cạnh đó, việc áp dụng linh hoạt các Mẫu thiết kế phần mềm (Design Patterns) như kiến trúc MVC, Singleton và Observer đã giúp mã nguồn có tính đóng gói cao, dễ dàng bảo trì và sẵn sàng cho các đợt mở rộng quy mô.
+
+
 
 \section{Mã nguồn và sản phẩm}
 
