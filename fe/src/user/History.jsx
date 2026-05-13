@@ -4,6 +4,15 @@ const History = () => {
   // --- STATES ---
   const [alertLogs, setAlertLogs] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [resolvingIds, setResolvingIds] = useState(new Set());
+  const user = (() => {
+    try {
+      return JSON.parse(localStorage.getItem("user") || "null");
+    } catch {
+      return null;
+    }
+  })();
+  const isHomeAdmin = user?.role === "Admin";
 
   // --- API CALLS ---
   const fetchAlertLogs = async () => {
@@ -30,6 +39,32 @@ const History = () => {
   useEffect(() => {
     fetchAlertLogs();
   }, []);
+
+  const handleResolve = async (alertId) => {
+    if (!window.confirm("Đánh dấu cảnh báo này là đã xử lý?")) return;
+
+    try {
+      setResolvingIds(prev => new Set(prev).add(alertId));
+      const token = localStorage.getItem("token");
+      const res = await fetch(`http://localhost:3000/api/v1/alerts/${alertId}/resolve`, {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || "Không thể xử lý cảnh báo");
+
+      fetchAlertLogs();
+    } catch (error) {
+      alert(error.message);
+    } finally {
+      setResolvingIds(prev => {
+        const next = new Set(prev);
+        next.delete(alertId);
+        return next;
+      });
+    }
+  };
 
   // --- HELPER FUNCTIONS ---
   const formatTime = (isoString) => {
@@ -93,11 +128,12 @@ const History = () => {
                   <th className="px-6 py-4">Thông báo</th>
                   <th className="px-6 py-4">Chỉ số lúc báo</th>
                   <th className="px-6 py-4 text-right">Trạng thái</th>
+                  {isHomeAdmin && <th className="px-6 py-4 text-right">Thao tác</th>}
                 </tr>
               </thead>
               <tbody className="text-gray-600 text-base">
                 {alertLogs.length === 0 ? (
-                  <tr><td colSpan="5" className="px-6 py-8 text-center text-gray-400">Tuyệt vời! Không có cảnh báo nào.</td></tr>
+                  <tr><td colSpan={isHomeAdmin ? "6" : "5"} className="px-6 py-8 text-center text-gray-400">Tuyệt vời! Không có cảnh báo nào.</td></tr>
                 ) : (
                   alertLogs.map((alert, index) => {
                     const { date, time } = formatTime(alert.detected_at || alert.timestamp);
@@ -105,7 +141,9 @@ const History = () => {
                     // Format màu cho Mức độ nghiêm trọng
                     let severityColor = "text-yellow-600 bg-yellow-50"; // Mặc định Trung bình
                     if (alert.severity === "Cao") severityColor = "text-red-600 bg-red-50";
-                    if (alert.severity === "Thap") severityColor = "text-blue-600 bg-blue-50";
+                    if (alert.severity === "Thấp") severityColor = "text-blue-600 bg-blue-50";
+                    const isResolved = alert.status === "Đã xử lý";
+                    const isResolving = resolvingIds.has(alert._id);
 
                     return (
                       <tr key={alert._id || index} className="border-b border-gray-50 hover:bg-red-50 transition-colors">
@@ -126,11 +164,26 @@ const History = () => {
                         </td>
                         <td className="px-6 py-4 text-right">
                           <span className={`px-2 py-1 text-xs font-semibold rounded-md ${
-                            alert.status === "Da xu ly" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                            isResolved ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
                           }`}>
                             {alert.status || "Chưa xử lý"}
                           </span>
                         </td>
+                        {isHomeAdmin && (
+                          <td className="px-6 py-4 text-right">
+                            {!isResolved ? (
+                              <button
+                                onClick={() => handleResolve(alert._id)}
+                                disabled={isResolving}
+                                className="px-3 py-1.5 rounded-lg bg-green-50 text-green-700 text-xs font-bold hover:bg-green-100 disabled:opacity-50"
+                              >
+                                {isResolving ? "Đang xử lý..." : "Đánh dấu xử lý"}
+                              </button>
+                            ) : (
+                              <span className="text-xs text-gray-400">Hoàn tất</span>
+                            )}
+                          </td>
+                        )}
                       </tr>
                     );
                   })

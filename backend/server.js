@@ -13,7 +13,7 @@ import helmet from "helmet";
 import morgan from "morgan";
 import swaggerUi from "swagger-ui-express";
 import connectDB from "./src/db/connect.js";
-// import mqttConfig from "./src/config/mqtt.js";
+import mqttConfig from "./src/config/mqtt.js";
 import config from "./src/config/index.js";
 import errorHandler from "./src/middlewares/errorHandler.js";
 import openApiSpec from "./src/docs/openapi.js";

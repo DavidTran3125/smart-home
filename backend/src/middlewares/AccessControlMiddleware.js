@@ -15,8 +15,7 @@ export const getUserDeviceIds = async (userId) => {
 export const verifyDeviceAccess = async (req, res, next) => {
   try {
     const userId = req.user.id;
-    const deviceId = req.params.deviceId || req.body.deviceId || req.params.id;
-
+    const deviceId = req.params.deviceId || req.params.id || req.body?.deviceId;
     if (!deviceId) return res.status(400).json({ error: "Thiếu deviceId" });
 
     const device = await Device.findById(deviceId);

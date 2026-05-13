@@ -10,9 +10,57 @@ import DeviceFactory from "../services/DeviceFactory.js";
 import Home from "../models/Home.js";
 import { getUserDeviceIds } from "../middlewares/AccessControlMiddleware.js";
 import {
+  DEVICE_STATUS_OFF,
   getStatusFromControlValue,
   normalizeDeviceStatus,
 } from "../utils/deviceStatus.js";
+
+const getDefaultThresholds = (feedName) => {
+  if (!feedName) {
+    return {
+      threshold_min_value: undefined,
+      threshold_max_value: undefined,
+      threshold_is_active: false,
+    };
+  }
+
+  const handler = DeviceFactory.createHandler(feedName);
+  if (!handler.isSensor()) {
+    return {
+      threshold_min_value: undefined,
+      threshold_max_value: undefined,
+      threshold_is_active: false,
+    };
+  }
+
+  switch (handler.getType()) {
+    case "temperature":
+      return {
+        threshold_min_value: undefined,
+        threshold_max_value: 65,
+        threshold_is_active: true,
+      };
+    case "humidity":
+      return {
+        threshold_min_value: 30,
+        threshold_max_value: 80,
+        threshold_is_active: true,
+      };
+    default:
+      return {
+        threshold_min_value: undefined,
+        threshold_max_value: undefined,
+        threshold_is_active: false,
+      };
+  }
+};
+
+const getStoredControlValue = (command) => {
+  const numericValue = Number(command);
+  return Number.isNaN(numericValue) ? command : numericValue;
+};
+
+const SERVO_OPEN_VALUE = 1;
 
 /**
  * GET /api/v1/devices
@@ -67,6 +115,8 @@ export const createDevice = async (req, res) => {
       return res.status(403).json({ success: false, error: "Bạn không có quyền thêm thiết bị vào nhà này" });
     }
 
+    const defaultThresholds = getDefaultThresholds(feed_name);
+
     createdDevice = await Device.create({
       name,
       type,
@@ -77,9 +127,9 @@ export const createDevice = async (req, res) => {
       status: normalizeDeviceStatus(status),
       homeId,
       owner_id: home.admin,
-      threshold_min_value,
-      threshold_max_value,
-      threshold_is_active,
+      threshold_min_value: threshold_min_value !== undefined ? threshold_min_value : defaultThresholds.threshold_min_value,
+      threshold_max_value: threshold_max_value !== undefined ? threshold_max_value : defaultThresholds.threshold_max_value,
+      threshold_is_active: threshold_is_active !== undefined ? threshold_is_active : defaultThresholds.threshold_is_active,
     });
 
     try {
@@ -156,17 +206,27 @@ export const controlDevice = async (req, res) => {
 
     // Dùng Factory để format lệnh điều khiển
     const handler = DeviceFactory.createHandler(device.feed_name);
-    const command = handler.formatControlCommand(value);
+    if (!handler.isControllable()) {
+      return res
+        .status(400)
+        .json({ success: false, error: "Cảm biến không hỗ trợ điều khiển" });
+    }
+
+    const isServoControl = handler.getType() === "servo";
+    const command = isServoControl ? String(SERVO_OPEN_VALUE) : handler.formatControlCommand(value);
 
     // Publish lệnh qua MQTT (Singleton)
     const mqttClient = MQTTClient.getInstance();
     await mqttClient.publishToFeed(device.feed_name, command);
 
     oldStatus = device.status;
-    const newStatus = getStatusFromControlValue(value);
+    const newStatus = isServoControl
+      ? DEVICE_STATUS_OFF
+      : getStatusFromControlValue(command);
     
     // BƯỚC 1: Cập nhật trạng thái trong DB
     device.status = newStatus;
+    device.control_value = isServoControl ? SERVO_OPEN_VALUE : getStoredControlValue(command);
     device.last_seen = new Date();
     await device.save();
 
@@ -188,12 +248,7 @@ export const controlDevice = async (req, res) => {
     res.json({
       success: true,
       message: `Đã gửi lệnh ${command} tới ${device.name}`,
-      data: {
-        device_id: device._id,
-        feed_name: device.feed_name,
-        command: command,
-        status: newStatus,
-      },
+      data: device,
     });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
@@ -227,5 +282,3 @@ export const deleteDevice = async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 };
-
-

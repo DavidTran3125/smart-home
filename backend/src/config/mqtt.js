@@ -40,7 +40,7 @@ alertSystem.init();     // Observer 3: Kiểm tra ngưỡng + gửi email
 // 3. MQTT Event Handlers
 // ========================
 client.on("connect", () => {
-  console.log("✅ Đã kết nối thành công tới Adafruit MQTT broker");
+  console.log("Đã kết nối thành công tới Adafruit MQTT broker");
 
   // Danh sách feeds cần lắng nghe
   const feedsToListen = [
@@ -62,7 +62,7 @@ client.on("connect", () => {
 client.on("message", (topic, message) => {
   const feedName = topic.split("/").pop();
   const value = message.toString();
-  console.log(`📥 Nhận được: [${feedName}] = ${value}`);
+  console.log(`Nhận được: [${feedName}] = ${value}`);
 
   // Phát sự kiện tới tất cả Observers (Observer Pattern)
   eventBus.publishSensorData({
@@ -73,7 +73,7 @@ client.on("message", (topic, message) => {
 });
 
 client.on("error", (err) => {
-  console.error("❌ MQTT Error:", err.message);
+  console.error("MQTT Error:", err.message);
 });
 
 export default { client: mqttClient };

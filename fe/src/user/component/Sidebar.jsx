@@ -4,12 +4,14 @@ import {
   SunIcon, 
   LightBulbIcon, 
   ExclamationTriangleIcon, 
-  ClockIcon,
-  HomeIcon // Đã thêm HomeIcon
+  HomeIcon,
+  UsersIcon,
+  Cog6ToothIcon,
+  ClipboardDocumentListIcon,
 } from "@heroicons/react/24/outline";
 
-const Sidebar = ({ activePage, setActivePage, handleLogout }) => {
-  const menuItems = [
+const Sidebar = ({ activePage, setActivePage, handleLogout, isHomeAdmin = false }) => {
+  const baseMenuItems = [
     {
       id: "tong-quan",
       label: "Tổng quan",
@@ -40,13 +42,32 @@ const Sidebar = ({ activePage, setActivePage, handleLogout }) => {
       icon: ExclamationTriangleIcon,
       color: "text-orange-500",
     },
+  ];
+
+  const adminMenuItems = [
     {
-      id: "lich-su",
-      label: "Lịch sử",
-      icon: ClockIcon,
+      id: "quan-ly-thanh-vien",
+      label: "Thành viên",
+      icon: UsersIcon,
+      color: "text-indigo-500",
+    },
+    {
+      id: "cau-hinh-thiet-bi",
+      label: "Cấu hình cảm biến",
+      icon: Cog6ToothIcon,
+      color: "text-slate-500",
+    },
+    {
+      id: "nhat-ky-nha",
+      label: "Nhật ký nhà",
+      icon: ClipboardDocumentListIcon,
       color: "text-gray-500",
     },
   ];
+
+  const menuItems = isHomeAdmin
+    ? [...baseMenuItems, ...adminMenuItems]
+    : baseMenuItems;
 
   return (
     <div className="w-64 h-screen bg-white border-r border-gray-200 flex flex-col">

@@ -36,15 +36,6 @@ export const getUserById = async (req, res) => {
   }
 };
 
-export const updateUser = async (req, res) => {
-  try {
-    const user = await systemService.updateUser(req.params.id, req.body);
-    res.json({ success: true, data: user });
-  } catch (error) {
-    sendError(res, error);
-  }
-};
-
 export const invalidateUser = async (req, res) => {
   try {
     const user = await systemService.invalidateUser(
@@ -109,26 +100,6 @@ export const createUserController = async (req, res) => {
   try {
     const user = await systemService.createAdminUser(req.body);
     res.status(201).json({ success: true, data: user });
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-};
-
-// Controller cho xóa vĩnh viễn
-export const hardDeleteUserController = async (req, res) => {
-  try {
-    const result = await systemService.hardDeleteUser(req.params.id);
-    res.json({ success: true, ...result });
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-};
-
-// Controller cho Toggle
-export const toggleUserController = async (req, res) => {
-  try {
-    const user = await systemService.toggleStatus(req.params.id);
-    res.json({ success: true, data: user });
   } catch (err) {
     res.status(400).json({ error: err.message });
   }

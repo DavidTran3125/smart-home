@@ -1,9 +1,19 @@
+import { useEffect, useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Login from './auth/Login';
 import Register from './auth/Register';
 import UserDashboard from './user/Dashboard';
 import AdminDashboard from './admin/Dashboard';
 import AddUser from './admin/AddUser';
+
+const API_URL = "http://localhost:3000";
+const ADMIN_ROLES = ['SystemAdmin'];
+const USER_ROLES = ['Gia đình', 'Gia dinh', 'Admin'];
+
+const clearSession = () => {
+  localStorage.removeItem("token");
+  localStorage.removeItem("user");
+};
 
 const getUser = () => {
   try {
@@ -14,33 +24,92 @@ const getUser = () => {
     // Kiểm tra token hết hạn chưa
     const payload = JSON.parse(atob(token.split(".")[1]));
     if (payload.exp * 1000 < Date.now()) {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
+      clearSession();
       return null;
     }
 
-    return JSON.parse(userStr);
+    const user = JSON.parse(userStr);
+    if (user.status === 'invalid') {
+      clearSession();
+      return null;
+    }
+
+    return user;
   } catch {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    clearSession();
     return null;
   }
 };
 
-const AdminRoute = ({ children }) => {
-  const user = getUser();
-  if (!user) return <Navigate to="/login" replace />;
-  if (user.role !== 'SystemAdmin') return <Navigate to="/login" replace />;
+const hasAllowedRole = (user, allowedRoles) => {
+  return user && allowedRoles.includes(user.role) && user.status !== 'invalid';
+};
+
+const ProtectedRoute = ({ children, allowedRoles }) => {
+  const [authState, setAuthState] = useState(() => {
+    const user = getUser();
+    const token = localStorage.getItem("token");
+
+    if (!user || !token || !hasAllowedRole(user, allowedRoles)) {
+      clearSession();
+      return { isChecking: false, isAllowed: false };
+    }
+
+    return { isChecking: true, isAllowed: false };
+  });
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setAuthState({ isChecking: false, isAllowed: false });
+      return;
+    }
+
+    let isCancelled = false;
+
+    const verifyCurrentUser = async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/v1/auth/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (!res.ok) throw new Error("Unauthorized");
+
+        const result = await res.json();
+        const currentUser = result.data;
+
+        if (!hasAllowedRole(currentUser, allowedRoles)) {
+          clearSession();
+          if (!isCancelled) setAuthState({ isChecking: false, isAllowed: false });
+          return;
+        }
+
+        localStorage.setItem("user", JSON.stringify(currentUser));
+        if (!isCancelled) setAuthState({ isChecking: false, isAllowed: true });
+      } catch {
+        clearSession();
+        if (!isCancelled) setAuthState({ isChecking: false, isAllowed: false });
+      }
+    };
+
+    verifyCurrentUser();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [allowedRoles]);
+
+  if (authState.isChecking) return null;
+  if (!authState.isAllowed) return <Navigate to="/login" replace />;
   return children;
 };
 
+const AdminRoute = ({ children }) => {
+  return <ProtectedRoute allowedRoles={ADMIN_ROLES}>{children}</ProtectedRoute>;
+};
+
 const UserRoute = ({ children }) => {
-  const user = getUser();
-  if (!user) return <Navigate to="/login" replace />;
-  const isFamily = user.role === 'Gia đình' || user.role === 'Gia dinh';
-  const isHomeAdmin = user.role === 'Admin';
-  if (!isFamily && !isHomeAdmin) return <Navigate to="/login" replace />;
-  return children;
+  return <ProtectedRoute allowedRoles={USER_ROLES}>{children}</ProtectedRoute>;
 };
 
 export default function App() {

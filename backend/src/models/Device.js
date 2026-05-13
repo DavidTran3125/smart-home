@@ -8,6 +8,7 @@ const deviceSchema = new mongoose.Schema({
   pin: { type: Number },
   pin_mode: { type: String },
   status: { type: String, enum: ["Bật", "Tắt"], default: "Tắt" },
+  control_value: { type: mongoose.Schema.Types.Mixed },
   threshold_min_value: { type: Number },
   threshold_max_value: { type: Number },
   threshold_is_active: { type: Boolean, default: false },

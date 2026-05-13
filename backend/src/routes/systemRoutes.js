@@ -8,10 +8,7 @@ import {
   getUsers,
   invalidateUser,
   reactivateUser,
-  updateUser,
   createUserController,
-  hardDeleteUserController,
-  toggleUserController,
 } from "../controllers/SystemController.js";
 
 const router = Router();
@@ -20,7 +17,12 @@ router.use(authMiddleware, isSystemAdmin);
 
 router.get("/users", getUsers);
 router.get("/users/:id", getUserById);
-router.put("/users/:id", updateUser);
+router.put("/users/:id", (req, res) => {
+  res.status(405).json({
+    success: false,
+    error: "SystemAdmin không thể cập nhật thông tin hồ sơ người dùng",
+  });
+});
 router.patch("/users/:id/invalidate", invalidateUser);
 router.patch("/users/:id/reactivate", reactivateUser);
 
@@ -37,6 +39,4 @@ router.get("/logs", getLogs);
 
 
 router.post("/users/create", createUserController);        // Thêm mới hoàn toàn
-router.delete("/users/:id/hard-delete", hardDeleteUserController); // Xóa mất xác
-router.patch("/users/:id/toggle", toggleUserController);
 export default router;

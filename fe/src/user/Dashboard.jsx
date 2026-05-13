@@ -6,13 +6,16 @@ import Sidebar from './component/Sidebar';
 import Environment from './Environment';
 import Devices from './Devices';
 import FireAlarm from './FireAlarm';
-import History from './History';
 import Home from './Home'; // Import file Home bạn vừa làm
+import HomeMembers from './HomeMembers';
+import DeviceConfig from './DeviceConfig';
+import HomeLogs from './HomeLogs';
 
 import TemperatureCard from './component/cards/TemperatureCard';
 import HumidityCard from './component/cards/HumidityCard';
 import ActiveDevicesCard from './component/cards/ActiveDevicesCard';
 import EnvironmentStatus from './component/cards/EnvironmentStatus';
+import EnvironmentTrendPanel from './component/environment/EnvironmentTrendPanel';
 
 // ======================================================
 // HELPERS
@@ -29,6 +32,20 @@ const isDeviceOn = (status) => {
   );
 };
 
+const SENSOR_FEEDS = new Set(['temp', 'humid', 'light']);
+
+const isSensorDevice = (device) => {
+  return SENSOR_FEEDS.has((device.feed_name || '').toLowerCase());
+};
+
+const getStoredUser = () => {
+  try {
+    return JSON.parse(localStorage.getItem("user") || "null");
+  } catch {
+    return null;
+  }
+};
+
 // ======================================================
 // OVERVIEW PAGE
 // ======================================================
@@ -36,9 +53,11 @@ const isDeviceOn = (status) => {
 const OverviewPage = ({
   devices = [],
   isLoading = true,
+  isHomeAdmin = false,
 }) => {
 
-  const activeDevices = devices.filter(d =>
+  const controllableDevices = devices.filter(d => !isSensorDevice(d));
+  const activeDevices = controllableDevices.filter(d =>
     isDeviceOn(d.status)
   );
 
@@ -65,9 +84,11 @@ const OverviewPage = ({
 
         <ActiveDevicesCard
           count={activeDevices.length}
-          total={devices.length}
+          total={controllableDevices.length}
         />
       </div>
+
+      <EnvironmentTrendPanel compact showThresholds={isHomeAdmin} />
 
       {/* Device status */}
       <div className="mb-8">
@@ -85,13 +106,13 @@ const OverviewPage = ({
               Đang tải dữ liệu thiết bị...
             </div>
 
-          ) : devices.length === 0 ? (
+          ) : controllableDevices.length === 0 ? (
             <div className="col-span-4 text-center py-4 text-gray-500 bg-white rounded-xl border border-gray-200">
-              Chưa có thiết bị nào trong hệ thống.
+              Chưa có thiết bị điều khiển nào trong hệ thống.
             </div>
 
           ) : (
-            devices.slice(0, 4).map((device) => {
+            controllableDevices.slice(0, 4).map((device) => {
 
               const isOn = isDeviceOn(device.status);
 
@@ -146,6 +167,8 @@ const OverviewPage = ({
 const DashboardLayout = () => {
 
   const navigate = useNavigate();
+  const user = getStoredUser();
+  const isHomeAdmin = user?.role === 'Admin';
 
   const [activePage, setActivePage] = useState('tong-quan');
 
@@ -197,7 +220,7 @@ const DashboardLayout = () => {
 
     const timer = setInterval(() => {
       fetchDevices();
-    }, 5000);
+    }, 10000);
 
     return () => clearInterval(timer);
 
@@ -225,6 +248,7 @@ const DashboardLayout = () => {
           <OverviewPage
             devices={devices}
             isLoading={isLoadingDevices}
+            isHomeAdmin={isHomeAdmin}
           />
         );
 
@@ -248,14 +272,21 @@ const DashboardLayout = () => {
       case 'canh-bao':
         return <FireAlarm />;
 
-      case 'lich-su':
-        return <History />;
+      case 'quan-ly-thanh-vien':
+        return isHomeAdmin ? <HomeMembers /> : <OverviewPage devices={devices} isLoading={isLoadingDevices} />;
+
+      case 'cau-hinh-thiet-bi':
+        return isHomeAdmin ? <DeviceConfig /> : <OverviewPage devices={devices} isLoading={isLoadingDevices} />;
+
+      case 'nhat-ky-nha':
+        return isHomeAdmin ? <HomeLogs /> : <OverviewPage devices={devices} isLoading={isLoadingDevices} />;
 
       default:
         return (
           <OverviewPage
             devices={devices}
             isLoading={isLoadingDevices}
+            isHomeAdmin={isHomeAdmin}
           />
         );
     }
@@ -269,6 +300,7 @@ const DashboardLayout = () => {
         activePage={activePage}
         setActivePage={setActivePage}
         handleLogout={handleLogout}
+        isHomeAdmin={isHomeAdmin}
       />
 
       <div className="flex-1 overflow-y-auto">

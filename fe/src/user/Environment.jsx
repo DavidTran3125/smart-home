@@ -1,10 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import CurrentCards from './component/environment/CurrentCards';
 import StatsGrid from './component/environment/StatsGrid';
+import EnvironmentTrendPanel from './component/environment/EnvironmentTrendPanel';
 
 
 
 const Environment = () => {
+  const user = (() => {
+    try {
+      return JSON.parse(localStorage.getItem("user") || "null");
+    } catch {
+      return null;
+    }
+  })();
+  const isHomeAdmin = user?.role === "Admin";
 
   const [currentTemp, setCurrentTemp] = useState({ value: "--", time: "--", status: "Đang tải...", color: "text-gray-500" });
   const [currentHum, setCurrentHum] = useState({ value: "--", time: "--", status: "Đang tải...", color: "text-gray-500" });
@@ -110,6 +119,7 @@ const Environment = () => {
 
       <CurrentCards currentTemp={currentTemp} currentHum={currentHum} />
       <StatsGrid stats={stats} />
+      <EnvironmentTrendPanel showThresholds={isHomeAdmin} />
       
     </div>
   );

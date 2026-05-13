@@ -26,7 +26,7 @@ const seedData = async () => {
       status: "active",
       homeId: undefined,
     });
-    console.log("✅ Đã tạo SystemAdmin demo: systemadmin@example.com / systemadmin123");
+    console.log("Đã tạo SystemAdmin demo: systemadmin@example.com / systemadmin123");
 
     const homeId = new mongoose.Types.ObjectId();
     const admin = await User.create({
@@ -38,7 +38,7 @@ const seedData = async () => {
       status: "active",
       homeId,
     });
-    console.log("✅ Đã tạo user Admin demo: admin@example.com / admin123");
+    console.log(" Đã tạo user Admin demo: admin@example.com / admin123");
 
     const member1 = await User.create({
       username: "family_member_1",
@@ -60,7 +60,7 @@ const seedData = async () => {
       homeId,
     });
 
-    console.log("✅ Đã tạo 2 user Gia đình demo: member1@example.com / member123, member2@example.com / member456");
+    console.log("Đã tạo 2 user Gia đình demo: member1@example.com / member123, member2@example.com / member456");
 
     const home = await Home.create({
       _id: homeId,
@@ -68,7 +68,7 @@ const seedData = async () => {
       admin: admin._id,
       members: [member1._id, member2._id],
     });
-    console.log("✅ Đã tạo Home demo: Căn hộ Demo");
+    console.log("Đã tạo Home demo: Căn hộ Demo");
 
     const devices = [
       {
@@ -76,12 +76,17 @@ const seedData = async () => {
         type: "Sensor",
         model: "DHT11",
         feed_name: "temp",
+        threshold_max_value: 65,
+        threshold_is_active: true,
       },
       {
         name: "Cảm biến Độ ẩm",
         type: "Sensor",
         model: "DHT11",
         feed_name: "humid",
+        threshold_min_value: 30,
+        threshold_max_value: 80,
+        threshold_is_active: true,
       },
       {
         name: "Cảm biến Ánh sáng",
@@ -94,12 +99,6 @@ const seedData = async () => {
         type: "Actuator",
         model: "DC Motor",
         feed_name: "fan",
-      },
-      {
-        name: "Đèn LED Đỏ",
-        type: "Actuator",
-        model: "LED",
-        feed_name: "ledred",
       },
       {
         name: "Đèn LED RGB",
@@ -124,10 +123,10 @@ const seedData = async () => {
       });
     }
 
-    console.log("✅ Đã nạp thành công 7 thiết bị vào Home của Admin!");
+    console.log("Đã nạp thành công 7 thiết bị vào Home của Admin!");
     process.exit();
   } catch (error) {
-    console.error("❌ Lỗi Seeding:", error);
+    console.error("Lỗi Seeding:", error);
     process.exit(1);
   }
 };

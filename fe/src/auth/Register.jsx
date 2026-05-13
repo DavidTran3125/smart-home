@@ -1,8 +1,11 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 export default function Register() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const invitationToken = searchParams.get("token");
+  const isInvitedRegistration = Boolean(invitationToken);
 
   const [fullName, setFullName] = useState("");
   const [username, setUsername] = useState("");
@@ -17,18 +20,32 @@ export default function Register() {
     try {
       const API_URL = "http://localhost:3000";
 
-      const res = await fetch(`${API_URL}/api/v1/auth/register`, {
+      const endpoint = isInvitedRegistration
+        ? `${API_URL}/api/v1/homes/register`
+        : `${API_URL}/api/v1/auth/register`;
+
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          full_name: fullName,
-          username: username,
-          email: email,
-          password: password,
-          role: "Gia đình",
-        }),
+        body: JSON.stringify(
+          isInvitedRegistration
+            ? {
+                token: invitationToken,
+                full_name: fullName,
+                username,
+                email,
+                password,
+              }
+            : {
+                full_name: fullName,
+                username,
+                email,
+                password,
+                role: "Gia đình",
+              }
+        ),
       });
 
       if (res.ok) {
@@ -57,10 +74,12 @@ export default function Register() {
         </div>
 
         <h1 className="text-3xl font-semibold text-center mb-1">
-          Tạo tài khoản
+          {isInvitedRegistration ? "Tham gia nhà" : "Tạo tài khoản"}
         </h1>
         <p className="text-gray-500 text-center mb-6">
-          Tham gia hệ thống Smart Home của bạn
+          {isInvitedRegistration
+            ? "Hoàn tất tài khoản bằng email đã được mời"
+            : "Tham gia hệ thống Smart Home của bạn"}
         </p>
 
         <form onSubmit={handleRegister} className="space-y-4">
@@ -138,5 +157,4 @@ export default function Register() {
     </div>
   );
 }
-
 

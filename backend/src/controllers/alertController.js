@@ -7,6 +7,12 @@ import Alert from "../models/Alert.js";
 import Device from "../models/Device.js";
 import ActivityLog from "../models/ActivityLog.js";
 import { getUserDeviceIds } from "../middlewares/AccessControlMiddleware.js";
+import DeviceFactory from "../services/DeviceFactory.js";
+
+const isSensorDevice = (device) => {
+  if (!device.feed_name) return false;
+  return DeviceFactory.createHandler(device.feed_name).isSensor();
+};
 
 /**
  * GET /api/v1/alerts/active
@@ -146,10 +152,12 @@ export const getThresholds = async (req, res) => {
       .sort({ name: 1 })
       .lean();
 
+    const sensorDevices = devices.filter(isSensorDevice);
+
     res.json({
       success: true,
-      count: devices.length,
-      data: devices,
+      count: sensorDevices.length,
+      data: sensorDevices,
     });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
@@ -167,6 +175,12 @@ export const updateThreshold = async (req, res) => {
 
     // Lấy device từ verifyDeviceAccess middleware
     const device = req.device;
+    if (!isSensorDevice(device)) {
+      return res.status(400).json({
+        success: false,
+        error: "Chỉ cảm biến mới có cấu hình ngưỡng cảnh báo",
+      });
+    }
 
     const oldMin = device.threshold_min_value;
     const oldMax = device.threshold_max_value;

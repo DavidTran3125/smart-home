@@ -59,7 +59,7 @@ export const inviteMember = async (adminId, homeId, email) => {
     throw new Error("Không thể tạo thư mời. Vui lòng thử lại.");
   }
 
-  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
   const registerLink = `${frontendUrl}/register?token=${invitation.token}`;
 
   await transporter.sendMail({

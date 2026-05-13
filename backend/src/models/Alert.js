@@ -7,6 +7,10 @@ const alertSchema = new mongoose.Schema({
     required: true,
   },
   severity: { type: String, enum: ["Thấp", "Trung bình", "Cao"] },
+  type: { type: String },
+  unit: { type: String },
+  threshold_value: { type: Number },
+  direction: { type: String, enum: ["above", "below"] },
   message: { type: String },
   value_at_alert: { type: Number },
   status: {

@@ -49,6 +49,14 @@ class DeviceHandler {
   }
 
   /**
+   * Thiết bị này có hỗ trợ nhận lệnh điều khiển không?
+   * @returns {boolean}
+   */
+  isControllable() {
+    return false;
+  }
+
+  /**
    * Format lệnh điều khiển trước khi gửi qua MQTT.
    * @param {*} value
    * @returns {string}
@@ -57,6 +65,14 @@ class DeviceHandler {
     return String(value);
   }
 }
+
+const clampNumber = (value, min, max) => {
+  const numericValue = Number(value);
+  if (Number.isNaN(numericValue)) return min;
+  return Math.max(min, Math.min(max, Math.round(numericValue)));
+};
+
+const SERVO_OPEN_VALUE = 1;
 
 // ========================
 // Concrete Handlers — Sensors
@@ -107,9 +123,12 @@ class FanHandler extends DeviceHandler {
   isSensor() {
     return false;
   }
+  isControllable() {
+    return true;
+  }
   formatControlCommand(value) {
-    // Fan: "0" = tắt, "1"/"2"/"3" = các mức tốc độ
-    return String(value);
+    // Fan: 0 = tắt, 1-100 = tốc độ quạt
+    return String(clampNumber(value, 0, 100));
   }
 }
 
@@ -120,10 +139,11 @@ class ServoHandler extends DeviceHandler {
   isSensor() {
     return false;
   }
+  isControllable() {
+    return true;
+  }
   formatControlCommand(value) {
-    // Servo: góc quay 0-180
-    const angle = Math.max(0, Math.min(180, Number(value)));
-    return String(angle);
+    return String(SERVO_OPEN_VALUE);
   }
 }
 
@@ -134,9 +154,12 @@ class LEDHandler extends DeviceHandler {
   isSensor() {
     return false;
   }
+  isControllable() {
+    return true;
+  }
   formatControlCommand(value) {
     // LED đơn sắc: "0" = tắt, "1" = bật
-    return String(value);
+    return Number(value) === 0 ? "0" : "1";
   }
 }
 
@@ -147,9 +170,12 @@ class LEDRGBHandler extends DeviceHandler {
   isSensor() {
     return false;
   }
+  isControllable() {
+    return true;
+  }
   formatControlCommand(value) {
-    // LED RGB: nhận chuỗi màu hoặc giá trị số
-    return String(value);
+    // LED RGB trong hệ thống hiện tại nhận brightness 0-255.
+    return String(clampNumber(value, 0, 255));
   }
 }
 

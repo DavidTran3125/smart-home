@@ -7,7 +7,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js",
     "seed": "node scripts/demo.js",
-    "seed:system-admin": "node scripts/createSystemAdmin.js"
+    "seed:system-admin": "node scripts/createSystemAdmin.js",
+    "dev": "node --watch server.js"
   },
   "keywords": [],
   "author": "",

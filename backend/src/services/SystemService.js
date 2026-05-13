@@ -16,14 +16,6 @@ const buildPagination = ({ page = 1, limit = 50 } = {}) => {
   return { pageNum, limitNum, skip: (pageNum - 1) * limitNum };
 };
 
-const removeRestrictedUserFields = (data) => {
-  const allowedFields = ["username", "email", "full_name", "phone"];
-  return allowedFields.reduce((result, field) => {
-    if (data[field] !== undefined) result[field] = data[field];
-    return result;
-  }, {});
-};
-
 const escapeRegExp = (value) => {
   return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 };
@@ -97,23 +89,6 @@ export const getUserById = async (id) => {
   return user;
 };
 
-export const updateUser = async (id, data) => {
-  const updateData = removeRestrictedUserFields(data);
-  if (Object.keys(updateData).length === 0) {
-    throw new Error("Không có trường hợp lệ để cập nhật");
-  }
-
-  const user = await User.findByIdAndUpdate(id, updateData, {
-    new: true,
-    runValidators: true,
-  })
-    .select("-password")
-    .populate("homeId", "name admin");
-
-  if (!user) throw new Error("Không tìm thấy người dùng");
-  return user;
-};
-
 export const invalidateUser = async (id, actorId, reason) => {
   const user = await User.findById(id);
   await assertCanInvalidateUser(user, actorId);
@@ -151,7 +126,7 @@ export const getDevices = async (query) => {
     filter.$or = [{ name: regex }, { feed_name: regex }, { type: regex }];
   }
 
-  const [devices, total] = await Promise.all([
+  const [devices, total, statDevices] = await Promise.all([
     Device.find(filter)
       .sort({ name: 1 })
       .skip(skip)
@@ -160,21 +135,51 @@ export const getDevices = async (query) => {
       .populate("owner_id", "username email full_name role status")
       .lean(),
     Device.countDocuments(filter),
+    Device.find(filter).select("_id status last_seen").lean(),
   ]);
 
   const deviceIds = devices.map((device) => device._id);
-  const activeAlerts = await Alert.find({
-    device_id: { $in: deviceIds },
-    status: "Chưa xử lý",
-  })
-    .select("device_id")
-    .lean();
+  const statDeviceIds = statDevices.map((device) => device._id);
+  const [activeAlerts, statActiveAlerts] = await Promise.all([
+    Alert.find({
+      device_id: { $in: deviceIds },
+      status: "Chưa xử lý",
+    })
+      .select("device_id")
+      .lean(),
+    Alert.find({
+      device_id: { $in: statDeviceIds },
+      status: "Chưa xử lý",
+    })
+      .select("device_id")
+      .lean(),
+  ]);
+
+  const statAlertDeviceIds = new Set(
+    statActiveAlerts.map((alert) => alert.device_id.toString())
+  );
+  const onlineCutoff = Date.now() - 5 * 60 * 1000;
+  const stats = statDevices.reduce(
+    (result, device) => {
+      const isOnline =
+        device.last_seen && new Date(device.last_seen).getTime() >= onlineCutoff;
+      const isOn = device.status === "Bật";
+      const hasAlert = statAlertDeviceIds.has(device._id.toString());
+
+      return {
+        online: result.online + (isOnline ? 1 : 0),
+        offline: result.offline + (isOnline ? 0 : 1),
+        on: result.on + (isOn ? 1 : 0),
+        off: result.off + (isOn ? 0 : 1),
+        alerting: result.alerting + (hasAlert ? 1 : 0),
+      };
+    },
+    { online: 0, offline: 0, on: 0, off: 0, alerting: 0 }
+  );
 
   const alertDeviceIds = new Set(
     activeAlerts.map((alert) => alert.device_id.toString())
   );
-  const onlineCutoff = Date.now() - 5 * 60 * 1000;
-
   const data = devices.map((device) => ({
     ...device,
     condition: {
@@ -192,13 +197,15 @@ export const getDevices = async (query) => {
     total,
     page: pageNum,
     totalPages: Math.ceil(total / limitNum),
+    stats,
     data,
   };
 };
 
 export const getLogs = async (query) => {
-  const { action, user_id, device_id, homeId, from, to } = query;
+  const { action, user_id, device_id, homeId, from, to, sort = "latest" } = query;
   const { pageNum, limitNum, skip } = buildPagination(query);
+  const sortDirection = sort === "oldest" ? 1 : -1;
 
   const filter = {};
   if (action) filter.action = action;
@@ -229,7 +236,7 @@ export const getLogs = async (query) => {
 
   const [logs, total] = await Promise.all([
     ActivityLog.find(filter)
-      .sort({ timestamp: -1 })
+      .sort({ timestamp: sortDirection })
       .skip(skip)
       .limit(limitNum)
       .populate("user_id", "username email full_name role status homeId")
@@ -288,21 +295,4 @@ export const createAdminUser = async (userData) => {
   const newUser = new User({ ...userData, password: hashedPassword, status: "active" });
   await newUser.save();
   return newUser;
-};
-
-// HÀM MỚI 2: Xóa vĩnh viễn khỏi Database (Hard Delete)
-export const hardDeleteUser = async (id) => {
-  const user = await User.findById(id);
-  if (!user) throw new Error("Không tìm thấy người dùng");
-  await User.findByIdAndDelete(id);
-  return { message: "Đã xóa vĩnh viễn người dùng khỏi hệ thống" };
-};
-
-// HÀM MỚI 3: Toggle Trạng thái (Bật/Tắt)
-export const toggleStatus = async (id) => {
-  const user = await User.findById(id);
-  if (!user) throw new Error("Không tìm thấy người dùng");
-  user.status = user.status === "active" ? "invalid" : "active";
-  await user.save();
-  return user;
 };
