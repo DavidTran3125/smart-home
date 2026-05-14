@@ -22,8 +22,8 @@
 #define CHANGE_BUTTON_PIN 5
 #define SERVO_PIN 15
 
-#define WLAN_SSID       "ACLAB"   // Replace with your Wi-Fi SSID
-#define WLAN_PASS       "ACLAB2023"   // Replace with your Wi-Fi Password
+#define WLAN_SSID       "HTS"   // Replace with your Wi-Fi SSID
+#define WLAN_PASS       "00000010"   // Replace with your Wi-Fi Password
 
 #define SERIAL_PRINT_DATA 1
 
@@ -51,3 +51,4 @@ extern float glob_fan_speed;
 extern int glob_servo_angle;
 extern Servo myservo;
 extern int glob_ledrgb_state;
+extern int glob_system_mode;

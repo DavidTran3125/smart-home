@@ -27,3 +27,4 @@ extern void LedRGB(int led_num, int led_state);
 //extern Adafruit_NeoPixel NeoPixel(4, led1_PIN , NEO_GRB + NEO_KHZ800);
 
 extern void setupLedTask();
+extern void setAllPixelsColor(uint8_t r, uint8_t g, uint8_t b);

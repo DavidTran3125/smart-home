@@ -14,6 +14,7 @@ float glob_light = 0.0;
 float glob_fan_speed = 0.0;
 int glob_servo_angle = 0;
 int glob_ledrgb_state = 0;
+int glob_system_mode = 0;
 
 void temp_humi_monitor(void *pvParameters){
     dht20.begin();
@@ -33,7 +34,7 @@ void temp_humi_monitor(void *pvParameters){
         temp.publish(glob_temperature);
         Serial.printf("Humidity: %.1f%%  Temperature: %.1f°C\n", humidity, temperature);
         
-        vTaskDelay(pdMS_TO_TICKS(5000)); 
+        vTaskDelay(pdMS_TO_TICKS(10000)); 
     }
 }
 
@@ -81,14 +82,14 @@ void Light_Task (void* pvParameter){
    pinMode(LIGHT_SENSOR_PIN, INPUT); // Set the pin as input
 
    while(1){
-      glob_light = (analogRead(LIGHT_SENSOR_PIN)*100)/4095; // Read the light sensor value
+      glob_light = (analogRead(LIGHT_SENSOR_PIN) * 100.0) / 4095; // Read the light sensor value
       light.publish(glob_light);
       #if SERIAL_PRINT_DATA == 1
          Serial.print(F("Light: "));
          Serial.print(glob_light);
          Serial.print(F("%\n"));
       #endif
-      vTaskDelay(20000 / portTICK_PERIOD_MS); // Delay of 20 second
+      vTaskDelay(pdMS_TO_TICKS(10000));
    }
 }
 
@@ -108,19 +109,26 @@ void setupDoorTask(){
 }
 
 void Servo_Task(int angle){
-        // Nếu nhận được giá trị từ adafruit IO, điều chỉnh servo theo giá trị nhận được
-        // Ví dụ: nếu glob_servo_angle là góc điều chỉnh của servo, bạn có thể sử dụng hàm analogWrite để điều khiển servo
-        if (angle >= 0 && angle <= 180) { // Kiểm tra nếu góc hợp lệ
-            myservo.write(90);
-            delay(3000);        // Đợi đúng 3 giây (3000ms)
-            myservo.write(0);   // Tự động đóng lại
-        }
+    // Nếu nhận được giá trị từ adafruit IO, điều chỉnh servo theo giá trị nhận được
+    if (angle == 90) { // Kiểm tra nếu góc hợp lệ
+        myservo.write(90);
+    } else if (angle == 0) {
+        myservo.write(0);
+    }
 }
 
 Adafruit_NeoPixel NeoPixel(4, led1_PIN , NEO_GRB + NEO_KHZ800);
 
 void setupLedTask(){
      NeoPixel.begin();
+}
+
+// Hàm cập nhật màu cho toàn bộ dải LED dựa trên giá trị R, G, B
+void setAllPixelsColor(uint8_t r, uint8_t g, uint8_t b) {
+    for(int i = 0; i < 4; i++) {
+        NeoPixel.setPixelColor(i, NeoPixel.Color(r, g, b));
+    }
+    NeoPixel.show();
 }
 
 void LedRGB(int led_num, int led_state) {
@@ -145,11 +153,12 @@ void LedRGB(int led_num, int led_state) {
         NeoPixel.show();
     }
     else if (led_num == 4){
-        if (led_state == 1) {
-            NeoPixel.setPixelColor(0, NeoPixel.Color(255, 255, 255));
-            NeoPixel.setPixelColor(1, NeoPixel.Color(255, 255, 255));
-            NeoPixel.setPixelColor(2, NeoPixel.Color(255, 255, 255));
-            NeoPixel.setPixelColor(3, NeoPixel.Color(255, 255, 255));
+        if (led_state) {
+            uint8_t brightness = led_state; // Thay đổi giá trị này từ 0 đến 255 để điều chỉnh độ sáng
+            NeoPixel.setPixelColor(0, NeoPixel.Color(brightness, brightness, brightness));
+            NeoPixel.setPixelColor(1, NeoPixel.Color(brightness, brightness, brightness));
+            NeoPixel.setPixelColor(2, NeoPixel.Color(brightness, brightness, brightness));
+            NeoPixel.setPixelColor(3, NeoPixel.Color(brightness, brightness, brightness));
             NeoPixel.show();
         } else {
             NeoPixel.setPixelColor(0, NeoPixel.Color(0, 0, 0));

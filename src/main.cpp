@@ -14,6 +14,7 @@ Adafruit_MQTT_Publish temp = Adafruit_MQTT_Publish(&mqtt, AIO_USERNAME "/feeds/t
 Adafruit_MQTT_Subscribe controll_fan = Adafruit_MQTT_Subscribe(&mqtt, AIO_USERNAME "/feeds/fan");
 Adafruit_MQTT_Subscribe controll_servo = Adafruit_MQTT_Subscribe(&mqtt, AIO_USERNAME "/feeds/servo");
 Adafruit_MQTT_Subscribe controll_ledrgb = Adafruit_MQTT_Subscribe(&mqtt, AIO_USERNAME "/feeds/ledrgb");
+Adafruit_MQTT_Subscribe controll_mode = Adafruit_MQTT_Subscribe(&mqtt, AIO_USERNAME "/feeds/mode");
 void MQTT_connect();
 
 void setup()
@@ -35,6 +36,7 @@ void setup()
   mqtt.subscribe(&controll_fan);
   mqtt.subscribe(&controll_servo);
   mqtt.subscribe(&controll_ledrgb);
+  mqtt.subscribe(&controll_mode);
   // 3. Đồng bộ NTP
   configTime(7 * 3600, 0, "pool.ntp.org");
   struct tm timeinfo;
@@ -61,35 +63,54 @@ void loop(){
   Adafruit_MQTT_Subscribe *subscription;
   // nếu subscribe thành công, hiển thị giá trị nhận được và cập nhật biến toàn cục glob_fan_speed
   while ((subscription = mqtt.readSubscription(1000))) {
-     if (subscription == &controll_fan) {
-        // Chuyển giá trị nhận được từ text sang số thực (float)
-        Serial.print("Giá trị nhận được từ MQTT: ");
-        Serial.println((char *)controll_fan.lastread);
-        glob_fan_speed = atof((char *)controll_fan.lastread); 
-        Serial.print("Tốc độ quạt mới: ");
-        Serial.println(glob_fan_speed);
-    }
-    if (subscription == &controll_servo) {
+      if (subscription == &controll_mode) {
+        glob_system_mode = atoi((char *)controll_mode.lastread);
+        Serial.print("Chế độ hệ thống mới: ");
+        Serial.println(glob_system_mode == 1 ? "AUTO (AI)" : "MANUAL (WEB)");
+      }
+      if (subscription == &controll_fan) {
+          // Chuyển giá trị nhận được từ text sang số thực (float)
+          Serial.print("Giá trị nhận được từ MQTT: ");
+          Serial.println((char *)controll_fan.lastread);
+          glob_fan_speed = atof((char *)controll_fan.lastread); 
+          Serial.print("Tốc độ quạt mới: ");
+          Serial.println(glob_fan_speed);
+      }
+      if (subscription == &controll_servo) {
         // Chuyển giá trị nhận được từ text sang số thực (float)
         Serial.print("Giá trị nhận được từ MQTT: ");
         Serial.println((char *)controll_servo.lastread);
-        if (controll_servo.lastread[0] == 'A') glob_servo_angle = 90;
+        if (controll_servo.lastread[0] == '1') glob_servo_angle = 90;
+        else glob_servo_angle = 0;
         Serial.print("Góc servo mới: ");
         Serial.println(glob_servo_angle);
         Servo_Task(glob_servo_angle);
-    }
+      }
     if (subscription == &controll_ledrgb) {
-        // Chuyển giá trị nhận được từ text sang số thực (float)
-        Serial.print("Giá trị nhận được từ MQTT: ");
-        Serial.println((char *)controll_ledrgb.lastread);
-        glob_ledrgb_state = atoi((char *)controll_ledrgb.lastread); 
-        Serial.print("Trạng thái LED RGB mới: ");
+      char *value = (char *)controll_ledrgb.lastread;
+      Serial.print("Gia tri nhan duoc: ");
+      Serial.println(value);
+
+      // KIỂM TRA: Nếu bắt đầu bằng '#' thì là mã màu Hex từ AI
+      if (value[0] == '#') {
+        long rgb = strtol(&value[1], NULL, 16); // Chuyển "00BFFF" thành số Hex
+        uint8_t r = (uint8_t)(rgb >> 16);
+        uint8_t g = (uint8_t)(rgb >> 8);
+        uint8_t b = (uint8_t)rgb;
+        
+        // Gửi màu trực tiếp tới tất cả LED
+        setAllPixelsColor(r, g, b);
+      } 
+      // NGƯỢC LẠI: Là số thứ tự hoặc độ sáng (Chế độ thủ công)
+      else {
+        glob_ledrgb_state = atoi(value); 
+        Serial.print("Manual Mode - Trang thai: ");
         Serial.println(glob_ledrgb_state);
-        LedRGB(4, glob_ledrgb_state);
+        LedRGB(4, glob_ledrgb_state); 
+      }
     }
   }
 }
-
 
 void MQTT_connect() {
   int8_t ret;
