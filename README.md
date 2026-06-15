@@ -435,4 +435,4 @@ Runs at approximately 80 FPS to determine room occupancy and trigger:
 
 ## License
 
-This project was developed for academic purposes as part of the Multidisciplinary Project course (CO3109) at Ho Chi Minh City University of Technology, VNU-HCM. All rights reserved by the authors.
+This project was developed for academic purposes as part of the Multidisciplinary Project course at Ho Chi Minh City University of Technology, VNU-HCM. All rights reserved by the authors.
